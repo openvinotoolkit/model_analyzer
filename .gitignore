@@ -1,0 +1,7 @@
+.idea/
+__pycache__/
+tests/output/
+tests/data/models/
+venv/
+*.pyc
+*.csv

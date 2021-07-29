@@ -1,0 +1,9 @@
+model_analyzer.py
+model_analyzer/__init__.py
+model_analyzer/__main__.py
+model_analyzer/layer_provider.py
+model_analyzer/network_complexity.py
+model_analyzer/network_metadata.py
+model_analyzer/uncounted_layers.py
+README.md
+requirements.txt

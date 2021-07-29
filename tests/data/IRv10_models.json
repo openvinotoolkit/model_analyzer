@@ -1,0 +1,548 @@
+[
+  {
+    "type": "action_recognition",
+    "name": "action-recognition-0001",
+    "xml_path": "intel/action-recognition-0001/action-recognition-0001-decoder/FP32/action-recognition-0001-decoder.xml",
+    "bin_path": "intel/action-recognition-0001/action-recognition-0001-decoder/FP32/action-recognition-0001-decoder.bin",
+    "analysis_report": {
+      "GFLOPs": 0.2439,
+      "GIOPs": 0.0,
+      "MParams": 7.5599,
+      "MinMem": 0.1475,
+      "MaxMem": 2.438
+    }
+  },
+  {
+    "type": "action_recognition",
+    "name": "action-recognition-0001",
+    "xml_path": "intel/action-recognition-0001/action-recognition-0001-encoder/FP32/action-recognition-0001-encoder.xml",
+    "bin_path": "intel/action-recognition-0001/action-recognition-0001-encoder/FP32/action-recognition-0001-encoder.bin",
+    "analysis_report": {
+      "GFLOPs": 7.3409,
+      "GIOPs": 0.0,
+      "MParams": 21.2762,
+      "MinMem": 1.6056,
+      "MaxMem": 13.0714
+    }
+  },
+  {
+    "type": "object_attributes",
+    "name": "age-gender-recognition-retail-0013",
+    "xml_path": "intel/age-gender-recognition-retail-0013/FP32/age-gender-recognition-retail-0013.xml",
+    "bin_path": "intel/age-gender-recognition-retail-0013/FP32/age-gender-recognition-retail-0013.bin",
+    "analysis_report": {
+      "GFLOPs": 0.0944,
+      "GIOPs": 0.0,
+      "MParams": 2.138,
+      "MinMem": 0.3456,
+      "MaxMem": 0.6419
+    }
+  },
+  {
+    "type": "action_recognition",
+    "name": "driver-action-recognition-adas-0002",
+    "xml_path": "intel/driver-action-recognition-adas-0002/driver-action-recognition-adas-0002-decoder/FP32/driver-action-recognition-adas-0002-decoder.xml",
+    "bin_path": "intel/driver-action-recognition-adas-0002/driver-action-recognition-adas-0002-decoder/FP32/driver-action-recognition-adas-0002-decoder.bin",
+    "analysis_report": {
+      "GFLOPs": 0.2375,
+      "GIOPs": 0.0,
+      "MParams": 7.3593,
+      "MinMem": 0.1475,
+      "MaxMem": 2.3924
+    }
+  },
+  {
+    "type": "action_recognition",
+    "name": "driver-action-recognition-adas-0002",
+    "xml_path": "intel/driver-action-recognition-adas-0002/driver-action-recognition-adas-0002-encoder/FP32/driver-action-recognition-adas-0002-encoder.xml",
+    "bin_path": "intel/driver-action-recognition-adas-0002/driver-action-recognition-adas-0002-encoder/FP32/driver-action-recognition-adas-0002-encoder.bin",
+    "analysis_report": {
+      "GFLOPs": 0.6827,
+      "GIOPs": 0.0,
+      "MParams": 2.8627,
+      "MinMem": 2.4084,
+      "MaxMem": 20.1807
+    }
+  },
+  {
+    "type": "object_attributes",
+    "name": "emotions-recognition-retail-0003",
+    "xml_path": "intel/emotions-recognition-retail-0003/FP32/emotions-recognition-retail-0003.xml",
+    "bin_path": "intel/emotions-recognition-retail-0003/FP32/emotions-recognition-retail-0003.bin",
+    "analysis_report": {
+      "GFLOPs": 0.1263,
+      "GIOPs": 0.0,
+      "MParams": 2.4825,
+      "MinMem": 0.1311,
+      "MaxMem": 0.5008
+    }
+  },
+  {
+    "type": "detection",
+    "name": "face-detection-adas-0001",
+    "xml_path": "intel/face-detection-adas-0001/FP32/face-detection-adas-0001.xml",
+    "bin_path": "intel/face-detection-adas-0001/FP32/face-detection-adas-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 2.855,
+      "GIOPs": 0.0,
+      "MParams": 1.053,
+      "MinMem": 7.2253,
+      "MaxMem": 62.5695
+    }
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/face-detection-retail-0004/FP32/face-detection-retail-0004.xml",
+    "bin_path": "intel/face-detection-retail-0004/FP32/face-detection-retail-0004.bin",
+    "analysis_report": {
+      "GFLOPs": 1.0711,
+      "GIOPs": 0.0,
+      "MParams": 0.5882,
+      "MinMem": 1.44,
+      "MaxMem": 16.07
+    },
+    "name": "face-detection-retail-0004"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/face-detection-retail-0005/FP32/face-detection-retail-0005.xml",
+    "bin_path": "intel/face-detection-retail-0005/FP32/face-detection-retail-0005.bin",
+    "analysis_report": {
+      "GFLOPs": 0.9912,
+      "GIOPs": 0.0,
+      "MParams": 1.0208,
+      "MinMem": 3.24,
+      "MaxMem": 32.3386
+    },
+    "name": "face-detection-retail-0005"
+  },
+  {
+    "type": "face_recognition",
+    "xml_path": "intel/face-reidentification-retail-0095/FP32/face-reidentification-retail-0095.xml",
+    "bin_path": "intel/face-reidentification-retail-0095/FP32/face-reidentification-retail-0095.bin",
+    "analysis_report": {
+      "GFLOPs": 0.5905,
+      "GIOPs": 0.0,
+      "MParams": 1.1068,
+      "MinMem": 1.0486,
+      "MaxMem": 13.1892
+    },
+    "name": "face-reidentification-retail-0095"
+  },
+  {
+    "type": "object_attributes",
+    "xml_path": "intel/facial-landmarks-35-adas-0002/FP32/facial-landmarks-35-adas-0002.xml",
+    "bin_path": "intel/facial-landmarks-35-adas-0002/FP32/facial-landmarks-35-adas-0002.bin",
+    "analysis_report": {
+      "GFLOPs": 0.0418,
+      "GIOPs": 0.0,
+      "MParams": 4.5953,
+      "MinMem": 0.1152,
+      "MaxMem": 0.4329
+    },
+    "name": "facial-landmarks-35-adas-0002"
+  },
+  {
+    "type": "object_attributes",
+    "xml_path": "intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002.xml",
+    "bin_path": "intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002.bin",
+    "analysis_report": {
+      "GFLOPs": 0.1396,
+      "GIOPs": 0.0,
+      "MParams": 1.8823,
+      "MinMem": 0.2412,
+      "MaxMem": 2.1039
+    },
+    "name": "gaze-estimation-adas-0002"
+  },
+  {
+    "type": "optical_character_recognition",
+    "xml_path": "intel/handwritten-score-recognition-0003/FP32/handwritten-score-recognition-0003.xml",
+    "bin_path": "intel/handwritten-score-recognition-0003/FP32/handwritten-score-recognition-0003.bin",
+    "analysis_report": {
+      "GFLOPs": 0.7924,
+      "GIOPs": 0.0,
+      "MParams": 5.5555,
+      "MinMem": 0.2621,
+      "MaxMem": 1.1702
+    },
+    "name": "handwritten-score-recognition-0003"
+  },
+  {
+    "type": "head_pose_estimation",
+    "xml_path": "intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001.xml",
+    "bin_path": "intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 0.1049,
+      "GIOPs": 0.0,
+      "MParams": 1.9119,
+      "MinMem": 0.2304,
+      "MaxMem": 1.1676
+    },
+    "name": "head-pose-estimation-adas-0001"
+  },
+  {
+    "type": "human_pose_estimation",
+    "xml_path": "intel/human-pose-estimation-0001/FP32/human-pose-estimation-0001.xml",
+    "bin_path": "intel/human-pose-estimation-0001/FP32/human-pose-estimation-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 15.4593,
+      "GIOPs": 0.0,
+      "MParams": 4.0987,
+      "MinMem": 3.7356,
+      "MaxMem": 86.5543
+    },
+    "name": "human-pose-estimation-0001"
+  },
+  {
+    "type": "object_attributes",
+    "xml_path": "intel/image-retrieval-0001/FP32/image-retrieval-0001.xml",
+    "bin_path": "intel/image-retrieval-0001/FP32/image-retrieval-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 0.6191,
+      "GIOPs": 0.0,
+      "MParams": 2.5348,
+      "MinMem": 2.4084,
+      "MaxMem": 22.272
+    },
+    "name": "image-retrieval-0001"
+  },
+  {
+    "type": "object_attributes",
+    "xml_path": "intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009.xml",
+    "bin_path": "intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009.bin",
+    "analysis_report": {
+      "GFLOPs": 0.021,
+      "GIOPs": 0.0,
+      "MParams": 0.1906,
+      "MinMem": 0.0737,
+      "MaxMem": 0.2994
+    },
+    "name": "landmarks-regression-retail-0009"
+  },
+  {
+    "type": "optical_character_recognition",
+    "xml_path": "intel/license-plate-recognition-barrier-0001/FP32/license-plate-recognition-barrier-0001.xml",
+    "bin_path": "intel/license-plate-recognition-barrier-0001/FP32/license-plate-recognition-barrier-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 0.3299,
+      "GIOPs": 0.0,
+      "MParams": 1.218,
+      "MinMem": 0.5181,
+      "MaxMem": 4.9432
+    },
+    "name": "license-plate-recognition-barrier-0001"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/pedestrian-and-vehicle-detector-adas-0001/FP32/pedestrian-and-vehicle-detector-adas-0001.xml",
+    "bin_path": "intel/pedestrian-and-vehicle-detector-adas-0001/FP32/pedestrian-and-vehicle-detector-adas-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 3.9975,
+      "GIOPs": 0.0,
+      "MParams": 1.6497,
+      "MinMem": 8.2575,
+      "MaxMem": 72.656
+    },
+    "name": "pedestrian-and-vehicle-detector-adas-0001"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/pedestrian-detection-adas-0002/FP32/pedestrian-detection-adas-0002.xml",
+    "bin_path": "intel/pedestrian-detection-adas-0002/FP32/pedestrian-detection-adas-0002.bin",
+    "analysis_report": {
+      "GFLOPs": 2.8565,
+      "GIOPs": 0.0,
+      "MParams": 1.1651,
+      "MinMem": 7.2253,
+      "MaxMem": 64.6795
+    },
+    "name": "pedestrian-detection-adas-0002"
+  },
+  {
+    "type": "object_attributes",
+    "xml_path": "intel/person-attributes-recognition-crossroad-0230/FP32/person-attributes-recognition-crossroad-0230.xml",
+    "bin_path": "intel/person-attributes-recognition-crossroad-0230/FP32/person-attributes-recognition-crossroad-0230.bin",
+    "analysis_report": {
+      "GFLOPs": 0.1701,
+      "GIOPs": 0.0,
+      "MParams": 0.7348,
+      "MinMem": 0.2048,
+      "MaxMem": 3.1638
+    },
+    "name": "person-attributes-recognition-crossroad-0230"
+  },
+  {
+    "type": "detection-",
+    "xml_path": "intel/person-detection-action-recognition-0005/FP32/person-detection-action-recognition-0005.xml",
+    "bin_path": "intel/person-detection-action-recognition-0005/FP32/person-detection-action-recognition-0005.bin",
+    "analysis_report": {
+      "GFLOPs": 7.1321,
+      "GIOPs": 0.0,
+      "MParams": 1.9514,
+      "MinMem": 6.528,
+      "MaxMem": 241.9452
+    },
+    "name": "person-detection-action-recognition-0005"
+  },
+  {
+    "type": "detection-",
+    "xml_path": "intel/person-detection-action-recognition-0006/FP32/person-detection-action-recognition-0006.xml",
+    "bin_path": "intel/person-detection-action-recognition-0006/FP32/person-detection-action-recognition-0006.bin",
+    "analysis_report": {
+      "GFLOPs": 8.2208,
+      "GIOPs": 0.0,
+      "MParams": 1.9999,
+      "MinMem": 6.528,
+      "MaxMem": 263.5441
+    },
+    "name": "person-detection-action-recognition-0006"
+  },
+  {
+    "type": "detection-",
+    "xml_path": "intel/person-detection-action-recognition-teacher-0002/FP32/person-detection-action-recognition-teacher-0002.xml",
+    "bin_path": "intel/person-detection-action-recognition-teacher-0002/FP32/person-detection-action-recognition-teacher-0002.bin",
+    "analysis_report": {
+      "GFLOPs": 7.1321,
+      "GIOPs": 0.0,
+      "MParams": 1.9514,
+      "MinMem": 6.528,
+      "MaxMem": 241.9452
+    },
+    "name": "person-detection-action-recognition-teacher-0002"
+  },
+  {
+    "type": "detection-",
+    "xml_path": "intel/person-detection-raisinghand-recognition-0001/FP32/person-detection-raisinghand-recognition-0001.xml",
+    "bin_path": "intel/person-detection-raisinghand-recognition-0001/FP32/person-detection-raisinghand-recognition-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 7.131,
+      "GIOPs": 0.0,
+      "MParams": 1.9509,
+      "MinMem": 6.528,
+      "MaxMem": 241.9366
+    },
+    "name": "person-detection-raisinghand-recognition-0001"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/person-detection-retail-0002/FP32/person-detection-retail-0002.xml",
+    "bin_path": "intel/person-detection-retail-0002/FP32/person-detection-retail-0002.bin",
+    "analysis_report": {
+      "GFLOPs": 12.4225,
+      "GIOPs": 0.0,
+      "MParams": 3.244,
+      "MinMem": 8.6344,
+      "MaxMem": 152.7925
+    },
+    "name": "person-detection-retail-0002"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/person-detection-retail-0013/FP32/person-detection-retail-0013.xml",
+    "bin_path": "intel/person-detection-retail-0013/FP32/person-detection-retail-0013.bin",
+    "analysis_report": {
+      "GFLOPs": 2.295,
+      "GIOPs": 0.0,
+      "MParams": 0.7229,
+      "MinMem": 4.1779,
+      "MaxMem": 109.5684
+    },
+    "name": "person-detection-retail-0013"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/person-vehicle-bike-detection-crossroad-0078/FP32/person-vehicle-bike-detection-crossroad-0078.xml",
+    "bin_path": "intel/person-vehicle-bike-detection-crossroad-0078/FP32/person-vehicle-bike-detection-crossroad-0078.bin",
+    "analysis_report": {
+      "GFLOPs": 3.9558,
+      "GIOPs": 0.0,
+      "MParams": 1.1785,
+      "MinMem": 6.2915,
+      "MaxMem": 171.0821
+    },
+    "name": "person-vehicle-bike-detection-crossroad-0078"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/person-vehicle-bike-detection-crossroad-1016/FP32/person-vehicle-bike-detection-crossroad-1016.xml",
+    "bin_path": "intel/person-vehicle-bike-detection-crossroad-1016/FP32/person-vehicle-bike-detection-crossroad-1016.bin",
+    "analysis_report": {
+      "GFLOPs": 3.5939,
+      "GIOPs": 0.0,
+      "MParams": 2.887,
+      "MinMem": 12.5829,
+      "MaxMem": 113.0185
+    },
+    "name": "person-vehicle-bike-detection-crossroad-1016"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/product-detection-0001/FP32/product-detection-0001.xml",
+    "bin_path": "intel/product-detection-0001/FP32/product-detection-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 3.6323,
+      "GIOPs": 0.0,
+      "MParams": 3.2125,
+      "MinMem": 12.5829,
+      "MaxMem": 113.2173
+    },
+    "name": "product-detection-0001"
+  },
+  {
+    "type": "semantic_segmentation",
+    "xml_path": "intel/road-segmentation-adas-0001/FP32/road-segmentation-adas-0001.xml",
+    "bin_path": "intel/road-segmentation-adas-0001/FP32/road-segmentation-adas-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 4.7324,
+      "GIOPs": 0.0,
+      "MParams": 0.1843,
+      "MinMem": 11.01,
+      "MaxMem": 307.2922
+    },
+    "name": "road-segmentation-adas-0001"
+  },
+  {
+    "type": "image_processing",
+    "xml_path": "intel/single-image-super-resolution-1032/FP32/single-image-super-resolution-1032.xml",
+    "bin_path": "intel/single-image-super-resolution-1032/FP32/single-image-super-resolution-1032.bin",
+    "analysis_report": {
+      "GFLOPs": 11.6547,
+      "GIOPs": 0.0,
+      "MParams": 0.0298,
+      "MinMem": 45.6192,
+      "MaxMem": 279.288
+    },
+    "name": "single-image-super-resolution-1032"
+  },
+  {
+    "type": "image_processing",
+    "xml_path": "intel/single-image-super-resolution-1033/FP32/single-image-super-resolution-1033.xml",
+    "bin_path": "intel/single-image-super-resolution-1033/FP32/single-image-super-resolution-1033.bin",
+    "analysis_report": {
+      "GFLOPs": 16.0487,
+      "GIOPs": 0.0,
+      "MParams": 0.0304,
+      "MinMem": 45.6192,
+      "MaxMem": 302.2848
+    },
+    "name": "single-image-super-resolution-1033"
+  },
+  {
+    "type": "detection-",
+    "xml_path": "intel/text-detection-0003/FP32/text-detection-0003.xml",
+    "bin_path": "intel/text-detection-0003/FP32/text-detection-0003.bin",
+    "analysis_report": {
+      "GFLOPs": 51.4032,
+      "GIOPs": 0.0,
+      "MParams": 6.7466,
+      "MinMem": 47.1859,
+      "MaxMem": 592.0397
+    },
+    "name": "text-detection-0003"
+  },
+  {
+    "type": "detection-",
+    "xml_path": "intel/text-detection-0004/FP32/text-detection-0004.xml",
+    "bin_path": "intel/text-detection-0004/FP32/text-detection-0004.bin",
+    "analysis_report": {
+      "GFLOPs": 23.4658,
+      "GIOPs": 0.0,
+      "MParams": 4.328,
+      "MinMem": 70.7789,
+      "MaxMem": 631.2859
+    },
+    "name": "text-detection-0004"
+  },
+  {
+    "type": "image_processing",
+    "xml_path": "intel/text-image-super-resolution-0001/FP32/text-image-super-resolution-0001.xml",
+    "bin_path": "intel/text-image-super-resolution-0001/FP32/text-image-super-resolution-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 1.3983,
+      "GIOPs": 0.0,
+      "MParams": 0.0027,
+      "MinMem": 16.5888,
+      "MaxMem": 48.6144
+    },
+    "name": "text-image-super-resolution-0001"
+  },
+  {
+    "type": "optical_character_recognition",
+    "xml_path": "intel/text-recognition-0012/FP32/text-recognition-0012.xml",
+    "bin_path": "intel/text-recognition-0012/FP32/text-recognition-0012.bin",
+    "analysis_report": {
+      "GFLOPs": 1.4864,
+      "GIOPs": 0.0,
+      "MParams": 5.5678,
+      "MinMem": 0.4915,
+      "MaxMem": 2.2278
+    },
+    "name": "text-recognition-0012"
+  },
+  {
+    "type": "feature_extraction",
+    "xml_path": "intel/text-spotting-0005/text-spotting-0005-recognizer-encoder/FP32/text-spotting-0005-recognizer-encoder.xml",
+    "bin_path": "intel/text-spotting-0005/text-spotting-0005-recognizer-encoder/FP32/text-spotting-0005-recognizer-encoder.bin",
+    "analysis_report": {
+      "GFLOPs": 2.0827,
+      "GIOPs": 0.0,
+      "MParams": 1.3279,
+      "MinMem": 0.4014,
+      "MaxMem": 1.8565
+    },
+    "name": "text-spotting-0005-recognizer-encoder"
+  },
+  {
+    "type": "object_attributes",
+    "xml_path": "intel/vehicle-attributes-recognition-barrier-0039/FP32/vehicle-attributes-recognition-barrier-0039.xml",
+    "bin_path": "intel/vehicle-attributes-recognition-barrier-0039/FP32/vehicle-attributes-recognition-barrier-0039.bin",
+    "analysis_report": {
+      "GFLOPs": 0.1257,
+      "GIOPs": 0.0,
+      "MParams": 0.626,
+      "MinMem": 0.1659,
+      "MaxMem": 0.5955
+    },
+    "name": "vehicle-attributes-recognition-barrier-0039"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/vehicle-detection-adas-0002/FP32/vehicle-detection-adas-0002.xml",
+    "bin_path": "intel/vehicle-detection-adas-0002/FP32/vehicle-detection-adas-0002.bin",
+    "analysis_report": {
+      "GFLOPs": 2.819,
+      "GIOPs": 0.0,
+      "MParams": 1.0786,
+      "MinMem": 7.2253,
+      "MaxMem": 64.6628
+    },
+    "name": "vehicle-detection-adas-0002"
+  },
+  {
+    "type": "detection",
+    "xml_path": "intel/vehicle-license-plate-detection-barrier-0106/FP32/vehicle-license-plate-detection-barrier-0106.xml",
+    "bin_path": "intel/vehicle-license-plate-detection-barrier-0106/FP32/vehicle-license-plate-detection-barrier-0106.bin",
+    "analysis_report": {
+      "GFLOPs": 0.3553,
+      "GIOPs": 0.0,
+      "MParams": 0.6343,
+      "MinMem": 4.32,
+      "MaxMem": 23.5676
+    },
+    "name": "vehicle-license-plate-detection-barrier-0106"
+  },
+  {
+    "name": "yolo-v2-ava-0001",
+    "type": "yolo",
+    "xml_path": "intel/yolo-v2-ava-0001/FP32/yolo-v2-ava-0001.xml",
+    "bin_path": "intel/yolo-v2-ava-0001/FP32/yolo-v2-ava-0001.bin",
+    "analysis_report": {
+      "GFLOPs": 29.4205,
+      "GIOPs": 0.0,
+      "MParams": 50.6451,
+      "MinMem": 11.0756,
+      "MaxMem": 52.9752
+    }
+  }
+]

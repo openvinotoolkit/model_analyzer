@@ -1,0 +1,27 @@
+name: Code Style
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  pylint-code-check:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: [ 3.6 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt install python3-setuptools
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
+          python3 -m pip install -r requirements_dev.txt
+      - name: Check code style
+        run: |
+          python3 -m pylint --load-plugins pylint_quotes model_analyzer
