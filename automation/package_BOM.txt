@@ -5,6 +5,7 @@ model_analyzer/layer_provider.py
 model_analyzer/network_complexity.py
 model_analyzer/network_metadata.py
 model_analyzer/uncounted_layers.py
+model_analyzer/value_converter.py
 README.md
 requirements.txt
 LICENSE

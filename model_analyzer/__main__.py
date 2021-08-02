@@ -1,8 +1,6 @@
 """
  Model Analyzer
-
  Copyright (c) 2019 Intel Corporation
-
  LEGAL NOTICE: Your use of this software and any required dependent software (the “Software Package”) is subject to
  the terms and conditions of the software license agreements for Software Package, which may also include
  notices, disclaimers, or license terms for third party or open source software
@@ -53,33 +51,29 @@ def parse_arguments():
                         default='model_report.csv')
 
     parser.add_argument('--per-layer-mode',
-                        help='Flag enables collecting per-layer complexity metrics',
+                        help='Enables collecting per-layer complexity metrics',
                         action='store_true',
                         default=False)
 
     parser.add_argument('--per-layer-report',
-                        help='File name for the per-layer complexity metrics. Should be specified only when -c option' +
+                        help='File name for the per-layer complexity metrics. '
+                             'Should be specified only when --per-layer-mode option' +
                              ' is used',
                         default='per_layer_report.csv')
 
     parser.add_argument('--sparsity-ignored-layers',
-                        help='Comma separated list of ignored layers',
+                        help='Specifies ignored layers names separated by comma',
                         default='')
 
     parser.add_argument('--sparsity-ignore-first-conv',
-                        help='Enables ignoring first Convolution layer for sparsity computation',
+                        help='Ignores first Convolution layer for sparsity computation',
                         action='store_true',
                         default=False)
 
     parser.add_argument('--sparsity-ignore-fc',
-                        help='Enables ignoring FullyConnected layers for sparsity computation',
+                        help='Ignores FullyConnected layers for sparsity computation',
                         action='store_true',
                         default=False)
-
-    parser.add_argument('--sparsity-level',
-                        help='Desired number of zero parameters in percentages',
-                        type=int,
-                        default=0)
 
     parser.add_argument('--ignore-unknown-layers',
                         help='Ignores unknown types of layers when counting GFLOPs',
@@ -111,8 +105,7 @@ def main(cli_args):
     network_computational_complexity.set_ignored_layers(sparsity_ignored_layers,
                                                         cli_args.sparsity_ignore_first_conv,
                                                         cli_args.sparsity_ignore_fc)
-    if cli_args.sparsity_level:
-        network_computational_complexity.sparsify(cli_args.sparsity_level)
+
     network_computational_complexity.print_network_info(cli_args.report_dir,
                                                         cli_args.model_report,
                                                         cli_args.per_layer_mode,
