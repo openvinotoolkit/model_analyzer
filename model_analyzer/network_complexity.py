@@ -66,13 +66,12 @@ class NetworkComputationalComplexity:
                     # Avoid double counting
                     if const_name not in self.params_const_layers:
                         parameters['total_params'] += params
-                        parameters['zero_params'] += zeros
                         self.params_const_layers.add(const_name)
+                        if layer_provider.name in self.ignored_layers:
+                            continue
+                        parameters['zero_params'] += zeros
             self.computational_complexity[layer_provider.name]['m_params'] = params / 1000000.0
         return parameters
-
-    def sparsify(self, sparsity: int):
-        pass
 
     @staticmethod
     def get_blob_sizes_and_precisions(layer_provider) -> tuple:
@@ -133,28 +132,26 @@ class NetworkComputationalComplexity:
 
     def print_network_info(self, output, file_name, complexity, complexity_filename):
         g_flops, g_iops = self.get_total_ops()
-        g_flops = '{:.4f}'.format(g_flops)
-        g_iops = '{:.4f}'.format(g_iops)
 
         parameters = self.get_total_params()
         total_parameters = parameters['total_params']
         zero_params = parameters['zero_params']
 
-        total_params = '{:.4f}'.format(total_parameters / 1000000.0)
-        sparsity = '{:.4f}'.format(zero_params / total_parameters) if zero_params is not None else None
-        min_mem_consumption = '{:.4f}'.format(self.get_minimum_memory_consumption() / 1000000.0)
-        max_mem_consumption = '{:.4f}'.format(self.get_maximum_memory_consumption() / 1000000.0)
+        total_params = total_parameters / 1000000.0
+        sparsity = zero_params / total_parameters * 100
+        min_mem_consumption = self.get_minimum_memory_consumption() / 1000000.0
+        max_mem_consumption = self.get_maximum_memory_consumption() / 1000000.0
         net_precisions = self.net_precisions.pop() if len(self.net_precisions) == 1 else 'MIXED (' + '-'.join(
             sorted(self.net_precisions)) + ')'
         guessed_type = self.net_metadata.guess_topology_type()
         if guessed_type:
             guessed_type = guessed_type.value
-        log.info('GFLOPs: %s', g_flops)
-        log.info('GIOPs: %s', g_iops)
-        log.info('MParams: %s', total_params)
-        log.info('Sparsity: %s', sparsity)
-        log.info('Minimum memory consumption: %s', min_mem_consumption)
-        log.info('Maximum memory consumption: %s', max_mem_consumption)
+        log.info('GFLOPs: %.4f', g_flops)
+        log.info('GIOPs: %.4f', g_iops)
+        log.info('MParams: %.4f', total_params)
+        log.info('Sparsity: %.4f%%', sparsity)
+        log.info('Minimum memory consumption: %.4f', min_mem_consumption)
+        log.info('Maximum memory consumption: %.4f', max_mem_consumption)
         log.info('Guessed type: %s', guessed_type)
         export_network_into_csv(g_flops, g_iops, total_params, sparsity, min_mem_consumption, max_mem_consumption,
                                 net_precisions, output, file_name, guessed_type)
@@ -222,25 +219,23 @@ class NetworkComputationalComplexity:
                 continue
             total_flops += layer_flops
         if not self.ignore_unknown_layers and unknown_layers:
-            print('Unknown types: {}'.format(', '.join(unknown_layers)))
+            print(f'Unknown types: {", ".join(unknown_layers)}')
             raise Exception('Model contains unknown layers!')
         if uncounted_layers:
-            print('Warning, GOPS for layer(s) wasn\'t counted - {}'.format((', '.join(uncounted_layers))))
+            print(f'Warning, GOPS for layer(s) was not counted - {", ".join(uncounted_layers)}')
         return total_flops, total_iops
 
     def set_ignored_layers(self, ignored_layers: List[str], ignore_first_conv: bool, ignore_fc: bool):
         self.ignored_layers.extend(ignored_layers)
         all_convs = []
         all_fcs = []
-        all_bns = []
         for layer_provider in self.layer_providers:
             if layer_provider.type.lower() == 'convolution':
                 all_convs.append(layer_provider.name)
             elif layer_provider.type.lower() == 'fullyconnected':
                 all_fcs.append(layer_provider.name)
             elif layer_provider.type.lower() == 'scaleshift':
-                all_bns.append(layer_provider.name)
-        self.ignored_layers.extend(all_bns)
+                self.ignored_layers.extend(layer_provider.name)
         if ignore_first_conv:
             self.ignored_layers.append(all_convs[0])
         if ignore_fc:
@@ -260,7 +255,7 @@ def export_network_into_csv(g_flops, g_iops, total_params, sparsity, min_mem_con
         info_writer.writerow(['GFLOPs', 'GIOPs', 'MParams', 'MinMem', 'MaxMem', 'Sparsity', 'Precision', 'GuessedType'])
         info_writer.writerow(
             [g_flops, g_iops, total_params, min_mem_consumption, max_mem_consumption, sparsity, net_precisions,
-            guessed_type])
+             guessed_type])
     log.info('Network status information file name: %s', file_name)
 
 
@@ -277,11 +272,11 @@ def get_layer_params(layer_provider):
     for param in sorted(layer_params):
         value = layer_params[param]
         if isinstance(value, list):
-            value_string = '(' + 'xs'.join(str(x) for x in value) + ')'
+            value_string = f'({"xs".join(str(x) for x in value)})'
         elif isinstance(value, str) and ',' in value:
-            value_string = '(' + 'x'.join(value.split(',')) + ')'
+            value_string = f'({"x".join(value.split(","))})'
         else:
             value_string = value
 
-        params.append('{}: {}'.format(param, value_string))
-    return '[{}]'.format('; '.join(params))
+        params.append(f'{param}: {value_string}')
+    return f'[{"; ".join(params)}]'

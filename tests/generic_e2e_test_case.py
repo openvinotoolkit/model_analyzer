@@ -35,7 +35,7 @@ class GenericE2ETestCase:
         bin_path = (self.data_dir / bin_path) if bin_path else None
         return xml_path, bin_path
 
-    def custom_set_up(self, xml_path: Path, bin_path: Path = None, sparsity_level=0):
+    def custom_set_up(self, xml_path: Path, bin_path: Path = None):
         xml_path, bin_path = self.get_model_paths(xml_path, bin_path)
         shutil.copy(xml_path, self.artifacts_dir)
 
@@ -50,7 +50,6 @@ class GenericE2ETestCase:
                                   sparsity_ignored_layers='',
                                   sparsity_ignore_first_conv=False,
                                   sparsity_ignore_fc=False,
-                                  sparsity_level=sparsity_level,
                                   ignore_unknown_layers=True)
         main(namespace)
 
@@ -83,5 +82,4 @@ class GenericE2ETestCase:
     @staticmethod
     def compare_float_dictionaries(actual, expected):
         for key, value in expected.items():
-            assert math.isclose(value, actual[key], rel_tol=1e-02), \
-                "Expected {} value {}, received {}".format(key, value, actual[key])
+            assert math.isclose(value, actual[key], rel_tol=1e-02), f"Expected {key} value {value}, received {key}"
