@@ -1,6 +1,8 @@
 """
  Model Analyzer
+
  Copyright (c) 2019 Intel Corporation
+
  LEGAL NOTICE: Your use of this software and any required dependent software (the “Software Package”) is subject to
  the terms and conditions of the software license agreements for Software Package, which may also include
  notices, disclaimers, or license terms for third party or open source software
