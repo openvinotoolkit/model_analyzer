@@ -7,3 +7,4 @@ model_analyzer/network_metadata.py
 model_analyzer/uncounted_layers.py
 README.md
 requirements.txt
+LICENSE
