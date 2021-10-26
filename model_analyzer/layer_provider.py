@@ -71,8 +71,7 @@ class LayerType(metaclass=MetaClass):
 
     @property
     def params(self) -> dict:
-        # pylint: disable=protected-access
-        return self.layer._get_attributes() if isinstance(self.layer, Node) else self.layer.params
+        return self.layer.get_attributes() if isinstance(self.layer, Node) else self.layer.params
 
     @property
     def name(self) -> dict:

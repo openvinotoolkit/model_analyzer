@@ -206,8 +206,7 @@ class NetworkMetaData:
         """Extract model params from the output layer of the model. YOLOv2/TinyYOLOv2 only."""
         params = {}
         relevant_attributes = ['classes', 'coords', 'num']
-        # pylint: disable=protected-access
-        output_attributes = self.output_layers[0]._get_attributes()
+        output_attributes = self.output_layers[0].get_attributes()
         for attribute in relevant_attributes:
             params[attribute] = output_attributes.get(attribute)
 
@@ -268,8 +267,7 @@ class NetworkMetaData:
 
         if isinstance(output, Node):
             output_type = output.get_type_name().lower()
-            # pylint: disable=protected-access
-            params = output._get_attributes()
+            params = output.get_attributes()
         else:
             output_type = output.type.lower()
             params = output.params
@@ -297,8 +295,7 @@ class NetworkMetaData:
 
         if isinstance(output, Node):
             output_type = output.get_type_name().lower()
-            # pylint: disable=protected-access
-            params = output._get_attributes()
+            params = output.get_attributes()
         else:
             output_type = output.type.lower()
             params = output.params
@@ -332,8 +329,7 @@ class NetworkMetaData:
     def _get_anchors(self) -> Optional[List[float]]:
         region_yolo = [layer for layer in self.output_layers if layer.get_type_name() == 'RegionYolo']
         if region_yolo:
-            # pylint: disable=protected-access
-            return region_yolo[0]._get_attributes().get('anchors', [])
+            return region_yolo[0].get_attributes().get('anchors', [])
         return None
 
     def _is_yolo(self) -> bool:
@@ -473,8 +469,7 @@ class NetworkMetaData:
             return False
 
         convolutions = [layer for layer in self.ops if layer.get_type_name() in ['Convolution', 'GroupConvolution']]
-        # pylint: disable=protected-access
-        dilations = {str(layer._get_attributes()['dilations']) for layer in convolutions}
+        dilations = {str(layer.get_attributes()['dilations']) for layer in convolutions}
         dilations.discard(None)
 
         layers_types = self.get_layer_types()
