@@ -19,7 +19,7 @@ pip install -r requirements_dev.txt
 
 3. Initialize the OpenVINO environment:
 ```shell
-source ~/intel/openvino_2021/bin/setupvars.sh
+source ~/intel/openvino_2022/setupvars.sh
 ```
 
 4. Run the script to download models for tests:
