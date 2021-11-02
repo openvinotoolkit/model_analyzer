@@ -1,4 +1,4 @@
 #!/bin/bash
 
-source /opt/intel/openvino/bin/setupvars.sh
+source /opt/intel/openvino/setupvars.sh
 pytest --disable-warnings -r A

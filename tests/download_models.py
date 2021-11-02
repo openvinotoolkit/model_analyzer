@@ -25,7 +25,7 @@ CURRENT_SCRIPT_DIRECTORY = Path.cwd()
 openvino_dir = Path(os.environ['INTEL_OPENVINO_DIR'])
 
 model_downloader_script = (
-        openvino_dir / 'deployment_tools' / 'open_model_zoo' / 'tools' / 'downloader' / 'downloader.py'
+        openvino_dir / 'extras' / 'open_model_zoo' / 'tools' / 'model_tools' / 'downloader.py'
 )
 
 
