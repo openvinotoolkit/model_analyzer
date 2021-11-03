@@ -22,7 +22,7 @@ Maximum Memory Consumption |Theoretical maximum of memory used by a model for in
 Sparsity |Percentage of zero weights| Percentage|20%
 
 
-## ⚙️ Command-Line Interface
+## ⚙️  Command-Line Interface
 
 Run this command to get a list of available arguments:
 
