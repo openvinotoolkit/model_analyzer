@@ -180,7 +180,7 @@ Warning, GOPS for layer(s) wasn't counted - ReduceMean
 
 Find the instructions for contributors in the [DEVELOPER.md](https://github.com/openvinotoolkit/model_analyzer/blob/master/DEVELOPER.md) document.
 
-## ⚠️  Limitations
+## ⚠️ Limitations
 
 1. Note that Model Analyzer provides approximate theoretical information, as some of the layers may be ignored due to the model structure.
 2. At the analysis stage, Model Analyzer can detect layers for which no information is available. Use `--ignore-unknown-layers` option to avoid any errors. Feel free to submit your suggestions on how to analyze these layers. 
