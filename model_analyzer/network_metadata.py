@@ -332,6 +332,9 @@ class NetworkMetaData:
             return region_yolo[0].get_attributes().get('anchors', [])
         return None
 
+    def yolo_has_raw_output(self) -> bool:
+        return 'RegionYolo' not in [layer.get_type_name() for layer in self.output_layers if layer.get_type_name()]
+
     def _is_yolo(self) -> bool:
         layer_types = set(self.get_layer_types())
         return 'RegionYolo' in layer_types
