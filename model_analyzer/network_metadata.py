@@ -602,3 +602,15 @@ class NetworkMetaData:
                 del exec_graph
                 del executable_network
         return list(int8precisions), int8layers
+
+    def get_model_shape(self) -> Dict[str, List[int]]:
+        shape = {}
+        for input_layer_name in self.get_ie_inputs():
+            shape[input_layer_name] = self.network.input_info[input_layer_name].input_data.shape
+        return shape
+
+    def is_model_dynamic(self) -> bool:
+        for _, shape in  self.get_model_shape().items():
+            if -1 in shape:
+                return True
+        return False
