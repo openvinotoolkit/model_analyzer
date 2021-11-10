@@ -610,7 +610,7 @@ class NetworkMetaData:
         return shape
 
     def is_model_dynamic(self) -> bool:
-        for _, shape in  self.get_model_shape().items():
+        for _, shape in self.get_model_shape().items():
             if -1 in shape:
                 return True
         return False
