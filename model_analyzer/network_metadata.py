@@ -109,9 +109,7 @@ class NetworkMetaData:
         return sorted(list(opsets))
 
     def is_obsolete(self) -> bool:
-        if self.function:
-            return False
-        return True
+        return bool(self.function)
 
     def get_framework(self):
         return self.xml.find('./meta_data/cli_parameters/framework').attrib['value']
@@ -219,7 +217,7 @@ class NetworkMetaData:
 
         return output_shape['C'] == 1
 
-    def get_mo_params(self) -> Union[Dict[str, str], None]:
+    def get_mo_params(self) -> Optional[Dict[str, str]]:
         """Return Model Optimizer CLI parameters from IR metadata, `None` if the node is absent."""
 
         mo_cli_params_node = self.xml.find('./meta_data/cli_parameters')
@@ -258,7 +256,7 @@ class NetworkMetaData:
 
         return False
 
-    def get_num_classes(self) -> Union[int, None]:
+    def get_num_classes(self) -> Optional[int]:
         """Return number of classes the IR supports, if possible."""
         if len(self.output_layers) != 1:
             return None
@@ -286,7 +284,7 @@ class NetworkMetaData:
             return None
         return int(num_classes)
 
-    def has_background_class(self) -> Union[bool, None]:
+    def has_background_class(self) -> Optional[bool]:
         """Return True if the IR supports background class, None if unknown."""
         if len(self.output_layers) != 1:
             return None
@@ -603,14 +601,25 @@ class NetworkMetaData:
                 del executable_network
         return list(int8precisions), int8layers
 
+    @staticmethod
+    def _get_fully_dynamic_shape_for_rank(rank) -> List[int]:
+        return [-1 for _ in range(rank.get_length())]
+
+    @staticmethod
+    def _get_shape_for_parameter_safely(parameter) -> List[int]:
+        partial_shape = parameter.get_partial_shape()
+        if partial_shape.is_dynamic:
+            return NetworkMetaData._get_fully_dynamic_shape_for_rank(partial_shape.rank)
+        return [s for s in partial_shape.to_shape()]
+
     def get_model_shape(self) -> Dict[str, List[int]]:
-        shape = {}
-        for input_layer_name in self.get_ie_inputs():
-            shape[input_layer_name] = self.network.input_info[input_layer_name].input_data.shape
-        return shape
+        parameters = self.function.get_parameters()
+        input_shapes = {}
+        for parameter in parameters:
+            input_name = parameter.get_friendly_name()
+            input_shapes[input_name] = self._get_shape_for_parameter_safely(parameter)
+
+        return input_shapes
 
     def is_model_dynamic(self) -> bool:
-        for _, shape in self.get_model_shape().items():
-            if -1 in shape:
-                return True
-        return False
+        return self.function.is_dynamic()
