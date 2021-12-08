@@ -606,7 +606,7 @@ class NetworkMetaData:
         return [-1 for _ in range(rank.get_length())]
 
     @staticmethod
-    def _get_shape_for_parameter_safely(parameter) -> List[int]:
+    def get_shape_for_parameter_safely(parameter) -> List[int]:
         partial_shape = parameter.get_partial_shape()
         if partial_shape.is_dynamic:
             return NetworkMetaData._get_fully_dynamic_shape_for_rank(partial_shape.rank)
@@ -617,7 +617,7 @@ class NetworkMetaData:
         input_shapes = {}
         for parameter in parameters:
             input_name = parameter.get_friendly_name()
-            input_shapes[input_name] = self._get_shape_for_parameter_safely(parameter)
+            input_shapes[input_name] = self.get_shape_for_parameter_safely(parameter)
 
         return input_shapes
 
