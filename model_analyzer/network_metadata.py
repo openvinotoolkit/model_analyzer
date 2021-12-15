@@ -109,7 +109,9 @@ class NetworkMetaData:
         return sorted(list(opsets))
 
     def is_obsolete(self) -> bool:
-        return bool(self.function)
+        if self.function:
+            return True
+        return False
 
     def get_framework(self):
         return self.xml.find('./meta_data/cli_parameters/framework').attrib['value']
