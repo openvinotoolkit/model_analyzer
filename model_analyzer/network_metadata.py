@@ -602,14 +602,20 @@ class NetworkMetaData:
         return list(int8precisions), int8layers
 
     @staticmethod
-    def _get_fully_dynamic_shape_for_rank(rank) -> List[int]:
-        return [-1 for _ in range(rank.get_length())]
+    def _get_shape_safely(partial_shape) -> List[int]:
+        shape = []
+        for i in range(partial_shape.rank):
+            dimension = -1
+            if partial_shape[i].is_static:
+                dimension = partial_shape.get_shape()[i]
+            shape.append(dimension)
+        return shape
 
     @staticmethod
     def get_shape_for_parameter_safely(parameter) -> List[int]:
         partial_shape = parameter.get_partial_shape()
         if partial_shape.is_dynamic:
-            return NetworkMetaData._get_fully_dynamic_shape_for_rank(partial_shape.rank)
+            return NetworkMetaData._get_shape_safely(partial_shape)
         return [s for s in partial_shape.to_shape()]
 
     def get_model_shape(self) -> Dict[str, List[int]]:
