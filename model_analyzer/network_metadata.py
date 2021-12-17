@@ -604,7 +604,7 @@ class NetworkMetaData:
     @staticmethod
     def _get_shape_safely(partial_shape) -> List[int]:
         shape = []
-        for i in range(len(partial_shape)):
+        for i, _ in enumerate(partial_shape):
             dimension = -1
             if partial_shape[i].is_static:
                 dimension = int(str(partial_shape[i]))
