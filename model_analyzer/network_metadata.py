@@ -629,3 +629,12 @@ class NetworkMetaData:
 
     def is_model_dynamic(self) -> bool:
         return self.function.is_dynamic()
+
+    def get_model_layout(self) -> Dict[str, str]:
+        layout_config = {}
+        for i in self.function.inputs():
+            node = i.node
+            name = node.get_friendly_name()
+            layout = node.get_layout()
+            layout_config[name] = str(layout)
+        return layout_config
