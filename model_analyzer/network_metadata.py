@@ -13,6 +13,7 @@
       https://software.intel.com/content/dam/develop/external/us/en/documents/intel-openvino-license-agreements.pdf
 """
 import logging
+import re
 from contextlib import suppress
 from enum import Enum
 from pathlib import Path
@@ -24,6 +25,7 @@ import ngraph as ng
 from ngraph.impl import Node
 from ngraph.impl.passes import Manager
 from openvino.inference_engine import IECore, IENetwork
+from openvino.pyopenvino import Layout
 
 
 class ModelTypes(Enum):
@@ -630,11 +632,20 @@ class NetworkMetaData:
     def is_model_dynamic(self) -> bool:
         return self.function.is_dynamic()
 
-    def get_model_layout(self) -> Dict[str, str]:
+    def get_model_layout(self) -> Dict[str, List[str]]:
         layout_config = {}
         for i in self.function.inputs():
             node = i.node
             name = node.get_friendly_name()
             layout = node.get_layout()
-            layout_config[name] = str(layout)
+            layout_config[name] = self._parse_layout_to_array(layout)
         return layout_config
+
+    @staticmethod
+    def _parse_layout_to_array(layout: Layout) -> List[str]:
+        layout_str = str(layout)
+        layout_match = re.search(r'\[(?P<layout>.*)]', layout_str)
+        if not layout_match:
+            return ['...', ]
+        clear_layout = layout_match.group('layout')
+        return [dim for dim in clear_layout.split(',')]
