@@ -614,8 +614,8 @@ class NetworkMetaData:
         return shape
 
     @staticmethod
-    def get_shape_for_parameter_safely(parameter) -> List[int]:
-        partial_shape = parameter.get_partial_shape()
+    def get_shape_for_node_safely(node: Node) -> List[int]:
+        partial_shape = node.get_partial_shape()
         if partial_shape.is_dynamic:
             return NetworkMetaData._get_shape_safely(partial_shape)
         return [s for s in partial_shape.to_shape()]
@@ -625,27 +625,9 @@ class NetworkMetaData:
         input_shapes = {}
         for parameter in parameters:
             input_name = parameter.get_friendly_name()
-            input_shapes[input_name] = self.get_shape_for_parameter_safely(parameter)
+            input_shapes[input_name] = self.get_shape_for_node_safely(parameter)
 
         return input_shapes
 
     def is_model_dynamic(self) -> bool:
         return self.function.is_dynamic()
-
-    def get_model_layout(self) -> Dict[str, List[str]]:
-        layout_config = {}
-        for i in self.function.inputs():
-            node = i.node
-            name = node.get_friendly_name()
-            layout = node.get_layout()
-            layout_config[name] = self._parse_layout_to_array(layout)
-        return layout_config
-
-    @staticmethod
-    def _parse_layout_to_array(layout: Layout) -> List[str]:
-        layout_str = str(layout)
-        layout_match = re.search(r'\[(?P<layout>.*)]', layout_str)
-        if not layout_match:
-            return ['...', ]
-        clear_layout = layout_match.group('layout')
-        return [dim for dim in clear_layout.split(',')]
