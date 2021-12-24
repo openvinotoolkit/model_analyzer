@@ -14,82 +14,46 @@
 """
 import logging
 from contextlib import suppress
-from enum import Enum
 from pathlib import Path
 from typing import Union, Dict, Optional, Tuple, List
 from xml.etree import ElementTree
 
-# pylint: disable=no-name-in-module,import-error
-import ngraph as ng
-from ngraph.impl import Node
-from ngraph.impl.passes import Manager
-from openvino.inference_engine import IECore, IENetwork
+from openvino.pyopenvino import Node, Model
+from openvino.pyopenvino.passes import Manager
+
+from model_analyzer.constants import ModelTypes, YoloAnchors, LayoutTypes
+from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
+from model_analyzer.shape_utils import get_shape_safely, get_shape_for_node_safely
 
 
-class ModelTypes(Enum):
-    YOLO = 'yolo'
-    YOLO_V2 = 'yolo_v2'
-    TINY_YOLO_V2 = 'tiny_yolo_v2'
-    YOLO_V3 = 'yolo_v3'
-    YOLO_V4 = 'yolo_v4'
-    TINY_YOLO_V3_V4 = 'tiny_yolo_v3_v4'
-    SSD = 'ssd'
-    CLASSIFICATION = 'classificator'
-    SEMANTIC_SEGM = 'segmentation'
-    INSTANCE_SEGM = 'mask_rcnn'
-    INAPINTING = 'inpainting'
-    STYLE_TRANSFER = 'style_transfer'
-    SUPER_RESOLUTION = 'super_resolution'
-    FACE_RECOGNITION = 'face_recognition'
-    LANDMARK_DETECTION = 'landmark_detection'
-    GENERIC = 'generic'
-
-
-class YoloAnchors(Enum):
-    yolo_v2 = [1.3221, 1.73145, 3.19275, 4.00944, 5.05587, 8.09892, 9.47112, 4.84053, 11.2364, 10.0071]
-    tiny_yolo_v2 = [1.08, 1.19, 3.42, 4.41, 6.63, 11.38, 9.42, 5.11, 16.62, 10.52]
-    yolo_v3 = [10, 13, 16, 30, 33, 23, 30, 61, 62, 45, 59, 119, 116, 90, 156, 198, 373, 326]
-    yolo_v4 = [12, 16, 19, 36, 40, 28, 36, 75, 76, 55, 72, 146, 142, 110, 192, 243, 459, 401]
-    tiny_yolo_v3_v4 = [10, 14, 23, 27, 37, 58, 81, 82, 135, 169, 344, 319]
-
-
-class LayoutTypes(Enum):
-    NCHW = 'NCHW'
-    NC = 'NC'
-    C = 'C'
-
-
-# pylint: disable=too-many-public-methods
-class NetworkMetaData:
+class ModelMetaData:
     """Retrieve IR metadata using heuristics."""
 
-    def __init__(self, network: IENetwork, model_path: Path = None):
-        self.network = network
-        self.function = ng.function_from_cnn(self.network)
-        self.ops = self.function.get_ordered_ops()
+    def __init__(self, model_path: Path, weights_path: Path):
+        self.model: Model = OPENVINO_CORE_SERVICE.read_model(str(model_path), str(weights_path))
+
+        self.ops = self.model.get_ordered_ops()
 
         # Load network to get execution graph if needed before Constant Folding (WA for PriorBox)
         self.int8precisions, self.int8layers = self.get_exec_graph_int8layers()
 
-        try:
-            pass_manager = Manager()
-            pass_manager.register_pass('ConstantFolding')
-            pass_manager.set_per_pass_validation(False)
-            pass_manager.run_passes(self.function)
-        # pylint: disable=broad-except
-        except Exception as exception:
-            logging.error(exception, exc_info=True)
-        # pylint: disable=fixme
-        # TODO: 42792
-        self.ops = self.function.get_ordered_ops()
+        self.constant_folding()
 
         self.is_onnx = model_path.suffix in ('.onnx', '.prototxt')
         self.xml = None if self.is_onnx else ElementTree.parse(model_path)
 
-        self.output_layers = list()
-        self.input_layers = self.function.get_parameters()
-        for result in self.function.get_results():
-            self.output_layers.append(result.input(0).get_source_output().get_node())
+        self.output_layers = [output.get_node() for output in self.model.outputs]
+        self.input_layers = [model_input.node for model_input in self.model.inputs]
+
+    def constant_folding(self):
+        try:
+            pass_manager = Manager()
+            pass_manager.register_pass('ConstantFolding')
+            pass_manager.set_per_pass_validation(False)
+            pass_manager.run_passes(self.model)
+        # pylint: disable=broad-except
+        except Exception as exception:
+            logging.error(exception, exc_info=True)
 
     def get_ir_version(self) -> Optional[int]:
         """Return IR version or `None` if the attribute is absent."""
@@ -109,23 +73,20 @@ class NetworkMetaData:
         return sorted(list(opsets))
 
     def is_obsolete(self) -> bool:
-        return not bool(self.function)
+        return not bool(self.model)
 
     def get_framework(self):
         return self.xml.find('./meta_data/cli_parameters/framework').attrib['value']
 
-    def get_ie_outputs(self) -> list:
-        return [*self.network.outputs]
+    def get_ie_outputs(self) -> List[str]:
+        return [model_outputs.node.name for model_outputs in self.model.outputs]
 
     def get_ie_inputs(self) -> list:
-        return [*self.network.input_info]
+        return [model_input.node.name for model_input in self.model.inputs]
 
     @staticmethod
-    def _get_ngraph_output_shape(layer: Node, port: int = 0) -> tuple:
-        partial_shape = layer.output(port).get_partial_shape()
-        if partial_shape.is_dynamic:
-            return ()
-        return partial_shape.to_shape()
+    def _get_output_shape(layer: Node, port: int = 0) -> List[int]:
+        return get_shape_for_node_safely(layer.output(port))
 
     def get_layer_types(self) -> list:
         return [layer.get_type_name() for layer in self.ops]
@@ -134,7 +95,7 @@ class NetworkMetaData:
         """Return the name of the IMAGE_INFO layer. Instance segmentation only."""
         result = None
         for layer in self.get_ie_inputs():
-            if self.network.input_info[layer].layout == LayoutTypes.NC.value:
+            if self.model.input_info[layer].layout == LayoutTypes.NC.value:
                 result = layer
                 break
         return result
@@ -243,7 +204,7 @@ class NetworkMetaData:
     def is_winograd(self) -> bool:
         """Return True if the model was adapted for Winograd algorithm."""
 
-        if self.function:
+        if self.model:
             for layer in self.ops:
                 if layer.get_type_name() == 'Convolution' and 'PrimitivesPriority' in layer.rt_info and \
                         'cpu:jit_avx512_winograd' in layer.rt_info['PrimitivesPriority'].get():
@@ -276,7 +237,7 @@ class NetworkMetaData:
             num_classes = params['num_classes']
         elif output_type == 'softmax':
             if isinstance(output, Node):
-                out_shape = self._get_ngraph_output_shape(output)
+                out_shape = self._get_output_shape(output)
                 num_classes = out_shape[1]
             else:
                 num_classes = output.out_data[0].shape[1]
@@ -305,7 +266,7 @@ class NetworkMetaData:
             indicator = 'attrs.background_label_id' in params or 'background_label_id' in params
         elif output_type == 'softmax':
             if isinstance(output, Node):
-                shape = self._get_ngraph_output_shape(output)
+                shape = self._get_output_shape(output)
             else:
                 shape = output.out_data[0].shape
             indicator = len(shape) == 2 and shape[1] == 1001
@@ -369,10 +330,12 @@ class NetworkMetaData:
         return False
 
     def _check_single_image_input(self) -> bool:
-        return len(self.input_layers) == 1 and len(self.input_layers[0].get_partial_shape().to_shape()) == 4
+        if not len(self.input_layers) == 1:
+            return False
+        return len(get_shape_for_node_safely(self.input_layers[0].output(0))) == 4
 
     def _all_outputs_are_image(self) -> bool:
-        return all(len(self._get_ngraph_output_shape(output)) == 4 for output in self.output_layers)
+        return all(len(self._get_output_shape(output)) == 4 for output in self.output_layers)
 
     def _check_output_shape_proportions(self) -> bool:
         """
@@ -380,16 +343,15 @@ class NetworkMetaData:
         Example: [1, 255, 17, 17], [1, 255, 34, 34]
         For single output, check if it has an odd number of cells in a row/col (as it is common practice).
         """
-        output_shapes = [self._get_ngraph_output_shape(output) for output in self.output_layers]
+        output_shapes = [self._get_output_shape(output) for output in self.output_layers]
 
         if len(output_shapes) == 1:
-            return NetworkMetaData._is_yolo_shape(output_shapes[0])
+            return ModelMetaData._is_yolo_shape(output_shapes[0])
 
         zipped_shapes = zip(*output_shapes)
         for shape in zipped_shapes:
             if any(dim % min(shape) for dim in shape):
                 return False
-
         return True
 
     @staticmethod
@@ -436,7 +398,7 @@ class NetworkMetaData:
         valid_layer_types = not layer_types & excluded_types
 
         out_layer = self.output_layers[0]
-        out_shape = self._get_ngraph_output_shape(out_layer)
+        out_shape = self._get_output_shape(out_layer)
 
         minimal_shape = len(out_shape) == 2
         reduced_shapes = out_shape[2] == out_shape[3] == 1 and out_shape[1] > 1
@@ -481,7 +443,7 @@ class NetworkMetaData:
         input_shape = self.get_shape_values(input_layer.layout, input_layer.input_data.shape)
 
         output_layer = self.output_layers[0]
-        output_shape = self._get_ngraph_output_shape(output_layer)
+        output_shape = self._get_output_shape(output_layer)
         output_dim = list(output_shape)[-2:]
 
         input_dim = [input_shape['H'], input_shape['W']]
@@ -504,8 +466,8 @@ class NetworkMetaData:
         single_stream = len(self.input_layers) == 1 and len(self.output_layers) == 1
         double_stream = len(self.input_layers) == 2 and len(self.output_layers) == 1
 
-        input_shapes = [candidate.get_partial_shape().to_shape() for candidate in self.input_layers]
-        output_shape = [self._get_ngraph_output_shape(candidate)
+        input_shapes = [get_shape_for_node_safely(candidate) for candidate in self.input_layers]
+        output_shape = [self._get_output_shape(candidate)
                         for candidate in self.output_layers][0]
 
         # Super-resolution network should return a valid RGB/grayscale image
@@ -536,7 +498,7 @@ class NetworkMetaData:
             return False
 
         output_layer = self.output_layers[0]
-        output_shapes = self._get_ngraph_output_shape(output_layer)
+        output_shapes = self._get_output_shape(output_layer)
         layers_types = set(self.get_layer_types())
 
         return {'PRelu', 'NormalizeL2'} & layers_types and len(output_shapes) == 2
@@ -553,7 +515,7 @@ class NetworkMetaData:
         reduced_dims = False
         if len(self.output_layers) == 1:
             output_layer = self.output_layers[0]
-            output_shapes = self._get_ngraph_output_shape(output_layer)
+            output_shapes = self._get_output_shape(output_layer)
             reduced_dims = output_shapes[2] == output_shapes[3] == 1
 
         return 'PRelu' in layers_types and reduced_dims
@@ -567,20 +529,21 @@ class NetworkMetaData:
         int8precisions = set()
         # pylint: disable=too-many-nested-blocks
         if self.is_int8():
-            ie_core = IECore()
-            executable_network = ie_core.load_network(self.network, 'CPU')
+            compiled_model = OPENVINO_CORE_SERVICE.compile_model(self.model, 'CPU')
+            layers_with_one_inputs = {
+                'convolution', 'deconvolution',
+                'fullyconnected', 'gemm', 'pooling'
+            }
             try:
-                exec_graph = executable_network.get_exec_graph_info()
-                exec_function = ng.function_from_cnn(exec_graph)
-                for layer in exec_function.get_ordered_ops():
+                execution_model = compiled_model.get_exec_graph_info()
+                for layer in execution_model.get_ordered_ops():
                     rt_info = layer.get_rt_info()
                     layer_type = rt_info['layerType'].get()
-                    inputs_number = 1 if layer_type.lower() in ['convolution', 'deconvolution', 'fullyconnected',
-                                                                'gemm', 'pooling'] else len(layer.inputs())
+                    inputs_number = 1 if layer_type.lower() in layers_with_one_inputs else len(layer.inputs())
                     input_precisions = [
                         layer.input(i).get_source_output().get_node().get_rt_info()['outputPrecisions'].get().lower()
                         for i in range(inputs_number)]
-                    search_precisions = ['i8', 'u8']
+                    search_precisions = {'i8', 'u8'}
                     for precision in search_precisions:
                         if precision in input_precisions:
                             int8precisions.add(precision)
@@ -601,31 +564,5 @@ class NetworkMetaData:
                 del executable_network
         return list(int8precisions), int8layers
 
-    @staticmethod
-    def _get_shape_safely(partial_shape) -> List[int]:
-        shape = []
-        for i, _ in enumerate(partial_shape):
-            dimension = -1
-            if partial_shape[i].is_static:
-                dimension = int(str(partial_shape[i]))
-            shape.append(dimension)
-        return shape
-
-    @staticmethod
-    def get_shape_for_parameter_safely(parameter) -> List[int]:
-        partial_shape = parameter.get_partial_shape()
-        if partial_shape.is_dynamic:
-            return NetworkMetaData._get_shape_safely(partial_shape)
-        return [s for s in partial_shape.to_shape()]
-
-    def get_model_shape(self) -> Dict[str, List[int]]:
-        parameters = self.function.get_parameters()
-        input_shapes = {}
-        for parameter in parameters:
-            input_name = parameter.get_friendly_name()
-            input_shapes[input_name] = self.get_shape_for_parameter_safely(parameter)
-
-        return input_shapes
-
     def is_model_dynamic(self) -> bool:
-        return self.function.is_dynamic()
+        return self.model.is_dynamic()

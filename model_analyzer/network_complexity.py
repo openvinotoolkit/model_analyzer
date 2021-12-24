@@ -19,12 +19,12 @@ import os
 from typing import List
 
 from model_analyzer.layer_provider import LayerTypesManager, LayerType, Constant, Result, Parameter
-from model_analyzer.network_metadata import NetworkMetaData
+from model_analyzer.model_metadata import ModelMetaData
 
 
 # pylint: disable=too-many-instance-attributes
 class NetworkComputationalComplexity:
-    def __init__(self, metadata: NetworkMetaData):
+    def __init__(self, metadata: ModelMetaData):
         self.net_metadata = metadata
         self.layer_providers = [LayerTypesManager.provider(layer) for layer in self.net_metadata.ops]
         self.input_names = [layer_provider.name for layer_provider in self.layer_providers if
@@ -185,7 +185,7 @@ class NetworkComputationalComplexity:
                 ])
         log.info('Complexity file name: %s', file_name)
 
-    def get_ops(self, layer_provider) -> int:
+    def get_ops(self, layer_provider: LayerType) -> int:
         try:
             total_flops = layer_provider.get_ops() * pow(10, -9)
         except NotImplementedError as error:
@@ -222,7 +222,7 @@ class NetworkComputationalComplexity:
             print(f'Unknown types: {", ".join(unknown_layers)}')
             raise Exception('Model contains unknown layers!')
         if uncounted_layers:
-            print(f'Warning, GOPS for layer(s) was not counted - {", ".join(uncounted_layers)}')
+            print(f'Warning, GOPS for layer(s) was not counted: - {", ".join(uncounted_layers)}')
         return total_flops, total_iops
 
     def set_ignored_layers(self, ignored_layers: List[str], ignore_first_conv: bool, ignore_fc: bool):

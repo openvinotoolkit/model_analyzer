@@ -23,7 +23,7 @@ from typing import Tuple
 from openvino.inference_engine import IECore
 
 from model_analyzer.network_complexity import NetworkComputationalComplexity
-from model_analyzer.network_metadata import NetworkMetaData
+from model_analyzer.model_metadata import ModelMetaData
 
 
 def parse_arguments():
@@ -96,9 +96,7 @@ def process_model_files(cli_args) -> Tuple[Path, Path]:
 def main(cli_args):
     log.info('Loading network files:\n\t%s\n\t%s', cli_args.model, cli_args.weights)
 
-    ie_core = IECore()
-    network = ie_core.read_network(model=cli_args.model, weights=cli_args.weights)
-    network_metadata = NetworkMetaData(network, cli_args.model)
+    network_metadata = ModelMetaData(cli_args.model, cli_args.weights)
 
     network_computational_complexity = NetworkComputationalComplexity(network_metadata)
     network_computational_complexity.set_ignore_unknown_layers(cli_args.ignore_unknown_layers)
@@ -112,7 +110,9 @@ def main(cli_args):
                                                         cli_args.model_report,
                                                         cli_args.per_layer_mode,
                                                         cli_args.per_layer_report)
+    print(network_metadata.get_opsets())
 
+    # ['opset1', 'opset3', 'opset4', 'opset8']
 
 if __name__ == '__main__':
     ARGUMENTS = parse_arguments()

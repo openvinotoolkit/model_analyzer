@@ -14,7 +14,7 @@
 import pytest
 from openvino.inference_engine import IECore
 
-from model_analyzer.network_metadata import NetworkMetaData, ModelTypes
+from model_analyzer.model_metadata import ModelMetaData, ModelTypes
 from tests.generic_e2e_test_case import GenericE2ETestCase, MODEL_PATHS, MODEL_PATHS_TYPE
 from tests.utils import load_test_config
 
@@ -67,6 +67,6 @@ class TestCaseR1Models(GenericE2ETestCase):
             else:
                 expected = model_type
 
-            result = NetworkMetaData(net, xml_path).guess_topology_type()
+            result = ModelMetaData(net, xml_path).guess_topology_type()
 
             assert expected == result

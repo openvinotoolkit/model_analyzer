@@ -19,8 +19,9 @@ from functools import reduce
 from typing import List, Type, Tuple, Dict
 
 import numpy as np
-# pylint: disable=no-name-in-module,import-error
-from ngraph.impl import Node
+from openvino.pyopenvino import Node
+
+from model_analyzer.shape_utils import get_shape_for_node_safely
 
 
 def _get_param_values(params: dict, multiple_form: str, single_form: str) -> list:
@@ -71,68 +72,51 @@ class LayerType(metaclass=MetaClass):
 
     @property
     def params(self) -> dict:
-        return self.layer.get_attributes() if isinstance(self.layer, Node) else self.layer.params
+        return self.layer.get_attributes()
 
     @property
-    def name(self) -> dict:
-        return self.layer.get_friendly_name() if isinstance(self.layer, Node) else self.layer.name
+    def name(self) -> str:
+        return self.layer.get_friendly_name()
 
     @property
-    def type(self) -> dict:
-        return self.layer.get_type_name() if isinstance(self.layer, Node) else self.layer.type
+    def type(self) -> str:
+        return self.layer.get_type_name()
 
     @property
-    def precision(self) -> dict:
-        return self.layer.get_element_type().get_type_name() if isinstance(self.layer, Node) else self.layer.precision
+    def precision(self) -> str:
+        return self.layer.get_element_type().get_type_name()
 
-    def get_child_names(self) -> list:
-        if isinstance(self.layer, Node):
-            children = []
-            for output in self.layer.outputs():
-                children = [i.get_node().get_friendly_name() for i in output.get_target_inputs()]
-            return children
-        return self.layer.children
+    def get_child_names(self) -> List[str]:
+        children = []
+        for output in self.layer.outputs():
+            children = [i.get_node().get_friendly_name() for i in output.get_target_inputs()]
+        return children
 
     @staticmethod
     def get_blob_size(shape: List[int]) -> int:
         return reduce(operator.mul, shape, 1)
 
     def get_outputs_number(self) -> int:
-        return len(self.layer.outputs()) if isinstance(self.layer, Node) else len(self.layer.out_data)
+        return len(self.layer.outputs())
 
     def get_output_precision(self, index: int) -> int:
-        if isinstance(self.layer, Node):
-            return self.layer.outputs()[index].get_element_type().get_type_name()
-        return self.layer.out_data[index].precision
+        return self.layer.outputs()[index].get_element_type().get_type_name()
 
     def get_output_shape(self, index: int) -> list:
-        if isinstance(self.layer, Node):
-            partial_shape = self.layer.output(index).get_partial_shape()
-            if partial_shape.is_dynamic:
-                logging.warning('%s layer of type %s has dynamic output shape.', self.name, self.type)
-                return []
-            return list(partial_shape.to_shape())
-        return self.layer.out_data[index].shape
+        output = self.layer.output(index)
+        return get_shape_for_node_safely(output)
 
     def get_output_blobs_total_size(self) -> int:
         return sum(self.get_blob_size(self.get_output_shape(i)) for i in range(self.get_outputs_number()))
 
     def get_inputs_number(self) -> int:
-        return len(self.layer.inputs()) if isinstance(self.layer, Node) else len(self.layer.in_data)
+        return len(self.layer.inputs())
 
     def get_input_precision(self, index: int) -> int:
-        if isinstance(self.layer, Node):
-            return self.layer.inputs()[index].get_element_type().get_type_name()
-        return self.layer.in_data[index].precision
+        return self.layer.inputs()[index].get_element_type().get_type_name()
 
     def get_input_shape(self, index: int) -> list:
-        if isinstance(self.layer, Node):
-            partial_shape = self.layer.input(index).get_partial_shape()
-            if partial_shape.is_dynamic:
-                logging.warning('%s layer of type %s has dynamic input shape.', self.name, self.type)
-                return []
-            return list(partial_shape.to_shape())
-        return self.layer.in_data[index].shape
+        return get_shape_for_node_safely(self.layer.input(index))
 
     def get_input_blobs_total_size(self) -> int:
         return sum(self.get_blob_size(self.get_input_shape(i)) for i in range(self.get_inputs_number()))
@@ -263,20 +247,16 @@ class Convolution(LayerType):
     layer_types = ['Convolution', 'GroupConvolution', 'DeformableConvolution']
 
     def get_ops_per_element(self) -> float:
-        if isinstance(self.layer, Node):
-            input_shape = self.get_input_shape(0)
-            filter_shape = self.get_input_shape(1)
-            input_channel = input_shape[1]
-            if self.layer.get_type_name() == 'GroupConvolution':
-                group = filter_shape[0]
-                kernel_spatial_size = reduce(operator.mul, list(filter_shape)[3:], 1)
-            else:
-                group = 1
-                kernel_spatial_size = reduce(operator.mul, list(filter_shape)[2:], 1)
+        input_shape = self.get_input_shape(0)
+        filter_shape = self.get_input_shape(1)
+        input_channel = input_shape[1]
+        if self.layer.get_type_name() == 'GroupConvolution':
+            group = filter_shape[0]
+            kernel_spatial_size = reduce(operator.mul, list(filter_shape)[3:], 1)
         else:
-            input_channel = self.get_input_channel()
-            kernel_spatial_size = reduce(operator.mul, _get_param_values(self.params, 'kernel', 'kernel'), 1)
-            group = int(self.params.get('group', 1))
+            group = 1
+            kernel_spatial_size = reduce(operator.mul, list(filter_shape)[2:], 1)
+
         # (mul + add) x ROI size
         flops_per_element = (self.mul + self.add) * (input_channel / group) * kernel_spatial_size
         return flops_per_element

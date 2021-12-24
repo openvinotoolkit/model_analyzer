@@ -19,7 +19,7 @@ from typing import Tuple, Dict
 
 import numpy as np
 # pylint: disable=no-name-in-module,import-error
-from ngraph.impl import Node
+from openvino.pyopenvino import Node
 
 from model_analyzer.layer_provider import LayerTypesManager, LayerType
 

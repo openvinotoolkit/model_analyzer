@@ -19,7 +19,7 @@ import pytest
 import os
 from openvino.inference_engine import IECore
 
-from model_analyzer.network_metadata import NetworkMetaData
+from model_analyzer.model_metadata import ModelMetaData
 from tests.utils import load_test_config
 
 _, CONFIG_DATA = load_test_config('IRv10_models.json')
@@ -46,7 +46,7 @@ def is_obsolete_model_test_params(request) -> Tuple[str, bool]:
 
 def test_is_obsolete(is_obsolete_model_test_params: Tuple[str, bool]):
     model, expected = is_obsolete_model_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
+    nmd = ModelMetaData(*get_network_and_xml_path(model))
     result = nmd.is_obsolete()
     assert result == expected
 
@@ -60,7 +60,7 @@ def model_version_test_params(request) -> Tuple[str, int]:
 
 def test_get_ir_version(model_version_test_params: Tuple[str, int]):
     model, expected = model_version_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
+    nmd = ModelMetaData(*get_network_and_xml_path(model))
     result = nmd.get_ir_version()
     assert result == expected
 
@@ -116,7 +116,7 @@ def mo_parameters_test_params(request) -> Tuple[str, Dict[str, str]]:
 
 def test_get_mo_params(mo_parameters_test_params: Tuple[str, Dict[str, str]]):
     model, expected = mo_parameters_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
+    nmd = ModelMetaData(*get_network_and_xml_path(model))
     result = nmd.get_mo_params()
     assert result == expected
 
@@ -131,7 +131,7 @@ def has_layer_type_test_params(request) -> Tuple[str, Tuple[str,...], bool]:
 
 def test_has_layer_type(has_layer_type_test_params: Tuple[str, Tuple[str,...], bool]):
     model, layer_types, expected = has_layer_type_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
+    nmd = ModelMetaData(*get_network_and_xml_path(model))
     result = nmd.has_layer_of_type(*layer_types)
     assert result == expected
 
@@ -145,7 +145,7 @@ def num_classes_test_params(request) -> Tuple[str, int]:
 
 def test_get_num_classes(num_classes_test_params: Tuple[str, int]):
     model, expected = num_classes_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
+    nmd = ModelMetaData(*get_network_and_xml_path(model))
     result = nmd.get_num_classes()
     assert result == expected
 
@@ -159,7 +159,7 @@ def background_class_test_params(request) -> Tuple[str, bool]:
 
 def test_has_background_class(background_class_test_params: Tuple[str, Optional[bool]]):
     model, expected = background_class_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
+    nmd = ModelMetaData(*get_network_and_xml_path(model))
     result = nmd.has_background_class()
     assert result == expected
 
@@ -173,6 +173,6 @@ def is_winograd_test_params(request) -> Tuple[str, bool]:
 
 def test_is_winograd(is_winograd_test_params: Tuple[str, bool]):
     model, expected = is_winograd_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
+    nmd = ModelMetaData(*get_network_and_xml_path(model))
     result = nmd.is_winograd()
     assert result == expected
