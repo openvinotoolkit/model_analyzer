@@ -79,7 +79,7 @@ class ModelMetaData:
         return self.xml.find('./meta_data/cli_parameters/framework').attrib['value']
 
     def get_ie_outputs(self) -> List[str]:
-        return [model_outputs.node.name for model_outputs in self.model.outputs]
+        return [model_outputs.node for model_outputs in self.model.outputs]
 
     def get_ie_inputs(self) -> list:
         return [model_input.node.name for model_input in self.model.inputs]
@@ -139,11 +139,11 @@ class ModelMetaData:
         framework = self.get_framework()
         if framework == 'onnx':
             for candidate in outputs:
-                if self.network.outputs[candidate].precision in ['I32', 'I16']:
+                precision = candidate.get_output_element_type(0).get_type_name()
+                if precision in {'i32', 'i16'}:
                     roles['classes_out'] = candidate
                     continue
-                if self.network.outputs[candidate].precision in ['FP32', 'FP16'] \
-                        and self.network.outputs[candidate].layout == LayoutTypes.C.value:
+                elif precision in {'fP32', 'fP16'} and self.network.outputs[candidate].layout == LayoutTypes.C.value:
                     roles['scores_out'] = candidate
                     continue
                 if self.network.outputs[candidate].layout == LayoutTypes.NC.value:
@@ -173,7 +173,7 @@ class ModelMetaData:
 
     def is_argmax_used(self):
         """Return info on whether the network output is argmaxed. Semantic Segmentation only"""
-        output_layer = self.network.outputs[self.get_ie_outputs()[0]]
+        output_layer = self.get_ie_outputs()[0]
         output_shape = self.get_shape_values(output_layer.layout, output_layer.shape)
 
         return output_shape['C'] == 1
@@ -437,8 +437,7 @@ class ModelMetaData:
 
         layers_types = self.get_layer_types()
 
-        input_name = next(iter(self.network.input_info))
-        input_layer = self.network.input_info[input_name]
+        input_layer = next(iter(self.model.inputs))
 
         input_shape = self.get_shape_values(input_layer.layout, input_layer.input_data.shape)
 
@@ -559,9 +558,7 @@ class ModelMetaData:
                 with suppress(NameError):
                     # pylint: disable=W0631
                     del layer
-                del exec_function
-                del exec_graph
-                del executable_network
+                del execution_model
         return list(int8precisions), int8layers
 
     def is_model_dynamic(self) -> bool:
