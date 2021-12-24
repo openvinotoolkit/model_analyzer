@@ -18,8 +18,8 @@ from pathlib import Path
 from typing import Union, Dict, Optional, Tuple, List
 from xml.etree import ElementTree
 
-from openvino.pyopenvino import Node, Model
-from openvino.pyopenvino.passes import Manager
+from openvino.runtime import Node, Model
+from openvino.runtime.passes import Manager
 
 from model_analyzer.constants import ModelTypes, YoloAnchors, LayoutTypes
 from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE

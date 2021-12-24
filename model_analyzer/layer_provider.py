@@ -19,7 +19,7 @@ from functools import reduce
 from typing import List, Type, Tuple, Dict
 
 import numpy as np
-from openvino.pyopenvino import Node
+from openvino.runtime import Node
 
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
