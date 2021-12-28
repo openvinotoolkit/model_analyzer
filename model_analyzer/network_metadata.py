@@ -13,19 +13,18 @@
       https://software.intel.com/content/dam/develop/external/us/en/documents/intel-openvino-license-agreements.pdf
 """
 import logging
-import re
 from contextlib import suppress
 from enum import Enum
 from pathlib import Path
 from typing import Union, Dict, Optional, Tuple, List
 from xml.etree import ElementTree
 
+from openvino.inference_engine import IECore, IENetwork
+
 # pylint: disable=no-name-in-module,import-error
 import ngraph as ng
 from ngraph.impl import Node
 from ngraph.impl.passes import Manager
-from openvino.inference_engine import IECore, IENetwork
-from openvino.pyopenvino import Layout
 
 
 class ModelTypes(Enum):
