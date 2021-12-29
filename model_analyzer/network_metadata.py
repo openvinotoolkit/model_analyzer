@@ -19,12 +19,11 @@ from pathlib import Path
 from typing import Union, Dict, Optional, Tuple, List
 from xml.etree import ElementTree
 
-from openvino.inference_engine import IECore, IENetwork
-
 # pylint: disable=no-name-in-module,import-error
 import ngraph as ng
 from ngraph.impl import Node
 from ngraph.impl.passes import Manager
+from openvino.inference_engine import IECore, IENetwork
 
 
 class ModelTypes(Enum):
