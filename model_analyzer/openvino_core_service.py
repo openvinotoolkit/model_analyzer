@@ -14,6 +14,7 @@
 """
 from pathlib import Path
 
+# pylint: disable=import-error
 from openvino.pyopenvino import Model
 from openvino.runtime import Core
 

@@ -15,6 +15,7 @@
 import logging
 from typing import List, Union
 
+# pylint: disable=import-error
 from openvino.runtime import Output, Input, PartialShape
 
 

@@ -60,16 +60,18 @@ class NetworkComputationalComplexity:
         for layer_provider in self.layer_providers:
             params = 0
             layer_params_dict = layer_provider.get_params()
-            if layer_params_dict:
-                for const_name in layer_params_dict.keys():
-                    params, zeros = layer_params_dict[const_name]
-                    # Avoid double counting
-                    if const_name not in self.params_const_layers:
-                        parameters['total_params'] += params
-                        self.params_const_layers.add(const_name)
-                        if layer_provider.name in self.ignored_layers:
-                            continue
-                        parameters['zero_params'] += zeros
+            if not layer_params_dict:
+                continue
+            for const_name in layer_params_dict:
+                params, zeros = layer_params_dict[const_name]
+                # Avoid double counting
+                if const_name in self.params_const_layers:
+                    continue
+                parameters['total_params'] += params
+                self.params_const_layers.add(const_name)
+                if layer_provider.name in self.ignored_layers:
+                    continue
+                parameters['zero_params'] += zeros
             self.computational_complexity[layer_provider.name]['m_params'] = params / 1000000.0
         return parameters
 
@@ -252,10 +254,15 @@ def export_network_into_csv(g_flops, g_iops, total_params, sparsity, min_mem_con
         file_name = os.path.join(output_dir, file_name)
     with open(file_name, mode='w') as info_file:
         info_writer = csv.writer(info_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        info_writer.writerow(['GFLOPs', 'GIOPs', 'MParams', 'MinMem', 'MaxMem', 'Sparsity', 'Precision', 'GuessedType'])
         info_writer.writerow(
-            [g_flops, g_iops, total_params, min_mem_consumption, max_mem_consumption, sparsity, net_precisions,
-             guessed_type])
+            ['GFLOPs', 'GIOPs', 'MParams', 'MinMem', 'MaxMem', 'Sparsity', 'Precision', 'GuessedType']
+        )
+        info_writer.writerow(
+            [
+                f'{g_flops:.4f}', f'{g_iops:.4f}', f'{total_params:.4f}', f'{min_mem_consumption:.4f}',
+                f'{max_mem_consumption:.4f}', f'{sparsity:.4f}', net_precisions, guessed_type
+            ]
+        )
     log.info('Network status information file name: %s', file_name)
 
 

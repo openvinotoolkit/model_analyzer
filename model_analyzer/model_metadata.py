@@ -18,12 +18,13 @@ from pathlib import Path
 from typing import Union, Dict, Optional, Tuple, List
 from xml.etree import ElementTree
 
+# pylint: disable=import-error
 from openvino.runtime import Node, Model
 from openvino.runtime.passes import Manager
 
 from model_analyzer.constants import ModelTypes, YoloAnchors, LayoutTypes
 from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
-from model_analyzer.shape_utils import get_shape_safely, get_shape_for_node_safely
+from model_analyzer.shape_utils import get_shape_for_node_safely
 
 
 class ModelMetaData:
@@ -225,16 +226,16 @@ class ModelMetaData:
         layer_types = self.get_layer_types()
 
         if 'RegionYolo' in layer_types:
-            op = next(filter(lambda op: op.get_type_name() == 'RegionYolo', self.ops))
-            params = op.get_attributes()
+            operation = next(filter(lambda operation: operation.get_type_name() == 'RegionYolo', self.ops))
+            params = operation.get_attributes()
             num_classes = params['classes']
         elif 'DetectionOutput' in layer_types:
-            op = next(filter(lambda op: op.get_type_name() == 'DetectionOutput', self.ops))
-            params = op.get_attributes()
+            operation = next(filter(lambda operation: operation.get_type_name() == 'DetectionOutput', self.ops))
+            params = operation.get_attributes()
             num_classes = params['num_classes']
         elif 'SoftMax' in layer_types:
-            op = next(filter(lambda op: op.get_type_name().lower() == 'softmax', self.ops))
-            out_shape = self._get_output_shape(op)
+            operation = next(filter(lambda operation: operation.get_type_name().lower() == 'SoftMax', self.ops))
+            out_shape = self._get_output_shape(operation)
             num_classes = out_shape[1]
         else:
             return None
@@ -393,11 +394,13 @@ class ModelMetaData:
         excluded_types = {'PRelu', 'NormalizeL2'}
         valid_layer_types = not layer_types & excluded_types
 
+        if not valid_layer_types:
+            return False
+
         out_layer = self.output_layers[0]
         out_shape = self._get_output_shape(out_layer)
 
-        minimal_shape = len(out_shape) == 2
-        if minimal_shape and valid_layer_types:
+        if len(out_shape) == 2:
             return True
         reduced_shapes = out_shape[2] == out_shape[3] == 1 and out_shape[1] > 1
 
