@@ -222,27 +222,23 @@ class ModelMetaData:
         if len(self.output_layers) != 1:
             return None
 
-        output = self.output_layers[0]
+        layer_types = self.get_layer_types()
 
-        if isinstance(output, Node):
-            output_type = output.get_type_name().lower()
-            params = output.get_attributes()
-        else:
-            output_type = output.type.lower()
-            params = output.params
-
-        if output_type == 'regionyolo':
+        if 'RegionYolo' in layer_types:
+            op = next(filter(lambda op: op.get_type_name() == 'RegionYolo', self.ops))
+            params = op.get_attributes()
             num_classes = params['classes']
-        elif output_type == 'detectionoutput':
+        elif 'DetectionOutput' in layer_types:
+            op = next(filter(lambda op: op.get_type_name() == 'DetectionOutput', self.ops))
+            params = op.get_attributes()
             num_classes = params['num_classes']
-        elif output_type == 'softmax':
-            if isinstance(output, Node):
-                out_shape = self._get_output_shape(output)
-                num_classes = out_shape[1]
-            else:
-                num_classes = output.out_data[0].shape[1]
+        elif 'SoftMax' in layer_types:
+            op = next(filter(lambda op: op.get_type_name().lower() == 'softmax', self.ops))
+            out_shape = self._get_output_shape(op)
+            num_classes = out_shape[1]
         else:
             return None
+
         return int(num_classes)
 
     def has_background_class(self) -> Optional[bool]:
@@ -401,10 +397,12 @@ class ModelMetaData:
         out_shape = self._get_output_shape(out_layer)
 
         minimal_shape = len(out_shape) == 2
+        if minimal_shape and valid_layer_types:
+            return True
         reduced_shapes = out_shape[2] == out_shape[3] == 1 and out_shape[1] > 1
 
         # To qualify, the outputs' HW shapes must either be missing or equal 1
-        return (minimal_shape or reduced_shapes) and valid_layer_types
+        return reduced_shapes and valid_layer_types
 
     def _is_ssd(self) -> bool:
         layer_types = set(self.get_layer_types())

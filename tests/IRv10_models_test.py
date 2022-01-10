@@ -12,7 +12,8 @@
 """
 
 import pytest
-from openvino.inference_engine import IECore
+
+from openvino.runtime import Core
 
 from model_analyzer.model_metadata import ModelMetaData, ModelTypes
 from tests.generic_e2e_test_case import GenericE2ETestCase, MODEL_PATHS, MODEL_PATHS_TYPE
@@ -53,8 +54,6 @@ class TestCaseR1Models(GenericE2ETestCase):
         if model_type not in cannot_recognize:
             xml_path = self.data_dir / xml_path
             bin_path = self.data_dir / bin_path
-            ie = IECore()
-            net = ie.read_network(xml_path, bin_path)
 
             if model_type == 'detection':
                 expected = ModelTypes.SSD
@@ -67,6 +66,6 @@ class TestCaseR1Models(GenericE2ETestCase):
             else:
                 expected = model_type
 
-            result = ModelMetaData(net, xml_path).guess_topology_type()
+            result = ModelMetaData(xml_path, bin_path).guess_topology_type()
 
             assert expected == result

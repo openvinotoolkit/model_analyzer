@@ -19,9 +19,6 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Tuple
 
-# pylint: disable=import-error,no-name-in-module
-from openvino.inference_engine import IECore
-
 from model_analyzer.network_complexity import NetworkComputationalComplexity
 from model_analyzer.model_metadata import ModelMetaData
 
@@ -110,9 +107,7 @@ def main(cli_args):
                                                         cli_args.model_report,
                                                         cli_args.per_layer_mode,
                                                         cli_args.per_layer_report)
-    print(network_metadata.get_opsets())
 
-    # ['opset1', 'opset3', 'opset4', 'opset8']
 
 if __name__ == '__main__':
     ARGUMENTS = parse_arguments()
