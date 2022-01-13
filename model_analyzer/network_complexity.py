@@ -16,7 +16,7 @@
 import csv
 import logging as log
 import os
-from typing import List
+from typing import List, Tuple
 
 from model_analyzer.layer_provider import LayerTypesManager, LayerType, Constant, Result, Parameter
 from model_analyzer.model_metadata import ModelMetaData
@@ -28,55 +28,74 @@ from model_analyzer.value_converter import ValueConverter
 
 class NetworkComputationalComplexity:
     def __init__(self, metadata: ModelMetaData):
-        self.net_metadata = metadata
-        self.layer_providers = [LayerTypesManager.provider(layer) for layer in self.net_metadata.ops]
-        self.input_names = [layer_provider.name for layer_provider in self.layer_providers if
-                            isinstance(layer_provider, Parameter)]
-        self.output_names = [layer_provider.name for layer_provider in self.layer_providers if
-                             isinstance(layer_provider, Result)]
-        self.ignored_layers = []
-        self.ignore_unknown_layers = True
-        self.computational_complexity = {}
+        self._model_metadata = metadata
+        self._layer_providers = [LayerTypesManager.provider(layer) for layer in self._model_metadata.ops]
+        self._ignored_layers = []
+        self._ignore_unknown_layers = True
+        self._computational_complexity = {}
         net_precisions = set()
-        for layer_provider in self.layer_providers:
+        for layer_provider in self._layer_providers:
             for i in range(layer_provider.get_outputs_number()):
                 net_precisions.add(layer_provider.get_output_precision(i))
-            self.computational_complexity[layer_provider.name] = {'layer_type': layer_provider.type,
-                                                                  'layer_name': layer_provider.name}
+            self._computational_complexity[layer_provider.name] = {
+                'layer_type': layer_provider.type,
+                'layer_name': layer_provider.name
+            }
 
             input_blob, output_blob = self.get_blob_sizes_and_precisions(layer_provider)
-            self.computational_complexity[layer_provider.name]['input_blob'] = input_blob
-            self.computational_complexity[layer_provider.name]['output_blob'] = output_blob
+            self._computational_complexity[layer_provider.name]['input_blob'] = input_blob
+            self._computational_complexity[layer_provider.name]['output_blob'] = output_blob
 
-        self.net_precisions = list(net_precisions.union(self.net_metadata.int8precisions))
-        self.params_const_layers = set()
+        self._net_precisions = list(net_precisions.union(self._model_metadata.int8precisions))
+        self._params_const_layers = set()
 
     @property
-    def network(self):
-        return self.net_metadata.network
+    def _output_names(self) -> Tuple[str]:
+        return tuple(
+            layer_provider.name
+            for layer_provider in self._layer_providers
+            if isinstance(layer_provider, Result)
+        )
+
+    @property
+    def _input_names(self) -> Tuple[str]:
+        return tuple(
+            layer_provider.name
+            for layer_provider in self._layer_providers
+            if isinstance(layer_provider, Parameter)
+        )
+
+    @property
+    def model(self):
+        return self._model_metadata.model
 
     def get_total_params(self) -> dict:
         parameters = {
             'total_params': 0,
             'zero_params': 0
         }
-        for layer_provider in self.layer_providers:
+        for layer_provider in self._layer_providers:
             params = 0
+            layer_computational_complexity = self._computational_complexity[layer_provider.name]
+            layer_computational_complexity['m_params'] = 0.0
+
             layer_params_dict = layer_provider.get_params()
             if not layer_params_dict:
                 continue
+
             for const_name in layer_params_dict:
                 params, zeros = layer_params_dict[const_name]
                 # Avoid double counting
-                if const_name in self.params_const_layers:
+                if const_name in self._params_const_layers:
                     continue
                 parameters['total_params'] += params
-                self.params_const_layers.add(const_name)
-                if layer_provider.name in self.ignored_layers:
+                self._params_const_layers.add(const_name)
+                if layer_provider.name in self._ignored_layers:
                     continue
                 parameters['zero_params'] += zeros
-            self.computational_complexity[layer_provider.name]['m_params'] = ValueConverter.to_giga(params)
+            self._computational_complexity[layer_provider.name]['m_params'] = ValueConverter.to_giga(params)
         return parameters
+
 
     @staticmethod
     def get_blob_sizes_and_precisions(layer_provider) -> tuple:
@@ -100,26 +119,26 @@ class NetworkComputationalComplexity:
 
     def get_maximum_memory_consumption(self) -> int:
         total_memory_size = 0
-        for layer_provider in self.layer_providers:
+        for layer_provider in self._layer_providers:
             if not isinstance(layer_provider, Constant):
                 total_memory_size += layer_provider.get_output_blobs_total_size()
         return total_memory_size
 
     def get_minimum_memory_consumption(self) -> int:
-        input_layer_providers = list(filter(lambda x: x.name in self.input_names, self.layer_providers))
-        all_layer_providers = list(
-            filter(lambda x: not isinstance(x, Constant), self.layer_providers))
-        is_computed = {layer_provider.name: False for layer_provider in all_layer_providers}
+        input__layer_providers = list(filter(lambda x: x.name in self._input_names, self._layer_providers))
+        all__layer_providers = list(
+            filter(lambda x: not isinstance(x, Constant), self._layer_providers))
+        is_computed = {layer_provider.name: False for layer_provider in all__layer_providers}
 
         direct_input_children_names = []
-        for layer_provider in input_layer_providers:
+        for layer_provider in input__layer_providers:
             direct_input_children_names.extend(layer_provider.get_child_names())
 
         max_memory_size = 0
-        for layer_provider in all_layer_providers:
+        for layer_provider in all__layer_providers:
             current_memory_size = layer_provider.get_output_blobs_total_size()
 
-            for prev_layer_provider in all_layer_providers:
+            for prev_layer_provider in all__layer_providers:
                 if prev_layer_provider.name == layer_provider.name:
                     break
                 memory_not_needed = True
@@ -146,9 +165,9 @@ class NetworkComputationalComplexity:
         sparsity = zero_params / total_parameters * 100
         min_mem_consumption = self.get_minimum_memory_consumption() / 1000000.0
         max_mem_consumption = self.get_maximum_memory_consumption() / 1000000.0
-        net_precisions = self.net_precisions.pop() if len(self.net_precisions) == 1 else 'MIXED (' + '-'.join(
-            sorted(self.net_precisions)) + ')'
-        guessed_type = self.net_metadata.guess_topology_type()
+        net_precisions = self._net_precisions.pop() if len(self._net_precisions) == 1 else 'MIXED (' + '-'.join(
+            sorted(self._net_precisions)) + ')'
+        guessed_type = self._model_metadata.guess_topology_type()
         if guessed_type:
             guessed_type = guessed_type.value
         log.info('GFLOPs: %.4f', g_flops)
@@ -163,30 +182,32 @@ class NetworkComputationalComplexity:
         if complexity:
             self.export_layers_into_csv(output, complexity_filename)
 
-    def export_layers_into_csv(self, output_dir, file_name):
+    def export_layers_into_csv(self, output_dir: str, file_name: str):
         if output_dir:
             file_name = os.path.join(output_dir, file_name)
         with open(file_name, mode='w') as info_file:
             info_writer = csv.writer(info_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             info_writer.writerow(
-                ['LayerType', 'LayerName', 'GFLOPs', 'GIOPs', 'MParams', 'LayerParams', 'InputBlobs', 'OutputBlobs'])
-            layers_ids = self.net_metadata.get_layers_ids()
+                ['LayerType', 'LayerName', 'MParams'])
+            layers_ids = self._model_metadata.get_layers_ids()
             try:
-                sorted_layers = sorted(self.computational_complexity.keys(), key=lambda x: layers_ids[x])
+                sorted_layers = sorted(self._computational_complexity.keys(), key=lambda x: layers_ids[x])
             except (KeyError, TypeError):
-                sorted_layers = sorted(self.computational_complexity.keys())
-            core_layers = filter(lambda x: x not in self.input_names, sorted_layers)
+                sorted_layers = sorted(self._computational_complexity.keys())
+            core_layers = filter(lambda x: x not in self._input_names, sorted_layers)
             for layer_name in core_layers:
-                cur_layer = self.computational_complexity[layer_name]
+                cur_layer = self._computational_complexity[layer_name]
+                if cur_layer['m_params'] == 0:
+                    continue
                 info_writer.writerow([
                     cur_layer['layer_type'],
                     cur_layer['layer_name'],
-                    '{:.4f}'.format(float(cur_layer['g_flops'])),
-                    '{:.4f}'.format(float(cur_layer['g_iops'])),
+                    # '{:.4f}'.format(float(cur_layer['g_flops'])),
+                    # '{:.4f}'.format(float(cur_layer['g_iops'])),
                     '{:.4f}'.format(float(cur_layer['m_params'])),
-                    cur_layer['layer_params'] if 'layer_params' in cur_layer.keys() else None,
-                    cur_layer['input_blob'],
-                    cur_layer['output_blob'],
+                    # cur_layer['layer_params'] if 'layer_params' in cur_layer.keys() else None,
+                    # cur_layer['input_blob'],
+                    # cur_layer['output_blob'],
                 ])
         log.info('Complexity file name: %s', file_name)
 
@@ -194,15 +215,15 @@ class NetworkComputationalComplexity:
         try:
             total_flops = layer_provider.get_ops() * pow(10, -9)
         except NotImplementedError as error:
-            self.computational_complexity[layer_provider.name]['g_iops'] = -1
-            self.computational_complexity[layer_provider.name]['g_flops'] = -1
+            self._computational_complexity[layer_provider.name]['g_iops'] = -1
+            self._computational_complexity[layer_provider.name]['g_flops'] = -1
             raise error
-        self.computational_complexity[layer_provider.name]['layer_params'] = get_layer_params(layer_provider)
-        self.computational_complexity[layer_provider.name]['g_iops'] = (
-            total_flops if layer_provider.name in self.net_metadata.int8layers else 0
+        self._computational_complexity[layer_provider.name]['layer_params'] = get_layer_params(layer_provider)
+        self._computational_complexity[layer_provider.name]['g_iops'] = (
+            total_flops if layer_provider.name in self._model_metadata.int8layers else 0
         )
-        self.computational_complexity[layer_provider.name]['g_flops'] = (
-            0 if layer_provider.name in self.net_metadata.int8layers else total_flops
+        self._computational_complexity[layer_provider.name]['g_flops'] = (
+            0 if layer_provider.name in self._model_metadata.int8layers else total_flops
         )
         return total_flops
 
@@ -211,7 +232,7 @@ class NetworkComputationalComplexity:
         unknown_layers = set()
         total_flops = 0
         total_iops = 0
-        for layer_provider in self.layer_providers:
+        for layer_provider in self._layer_providers:
             if layer_provider.__class__ == LayerType:
                 unknown_layers.add(layer_provider.type)
             try:
@@ -219,35 +240,32 @@ class NetworkComputationalComplexity:
             except NotImplementedError:
                 uncounted_layers.add(layer_provider.type)
                 continue
-            if layer_provider.name in self.net_metadata.int8layers:
+            if layer_provider.name in self._model_metadata.int8layers:
                 total_iops += layer_flops
                 continue
             total_flops += layer_flops
-        if not self.ignore_unknown_layers and unknown_layers:
+        if not self._ignore_unknown_layers and unknown_layers:
             print(f'Unknown types: {", ".join(unknown_layers)}')
             raise Exception('Model contains unknown layers!')
         if uncounted_layers:
             print(f'Warning, GOPS for layer(s) was not counted: - {", ".join(uncounted_layers)}')
         return total_flops, total_iops
 
-    def set_ignored_layers(self, ignored_layers: List[str], ignore_first_conv: bool, ignore_fc: bool):
-        self.ignored_layers.extend(ignored_layers)
+    def set_ignored_layers(self, _ignored_layers: List[str], ignore_first_conv: bool, ignore_fc: bool):
+        self._ignored_layers.extend(_ignored_layers)
         all_convs = []
-        all_fcs = []
-        for layer_provider in self.layer_providers:
+        for layer_provider in self._layer_providers:
             if layer_provider.type.lower() == 'convolution':
                 all_convs.append(layer_provider.name)
             elif layer_provider.type.lower() == 'fullyconnected':
-                all_fcs.append(layer_provider.name)
+                self._ignored_layers.append(layer_provider.name)
             elif layer_provider.type.lower() == 'scaleshift':
-                self.ignored_layers.extend(layer_provider.name)
+                self._ignored_layers.extend(layer_provider.name)
         if ignore_first_conv:
-            self.ignored_layers.append(all_convs[0])
-        if ignore_fc:
-            self.ignored_layers.extend(all_fcs)
+            self._ignored_layers.append(all_convs[0])
 
-    def set_ignore_unknown_layers(self, ignore_unknown_layers: bool):
-        self.ignore_unknown_layers = ignore_unknown_layers
+    def set_ignore_unknown_layers(self, _ignore_unknown_layers: bool):
+        self._ignore_unknown_layers = _ignore_unknown_layers
 
 
 # pylint: disable=too-many-arguments
@@ -269,7 +287,7 @@ def export_network_into_csv(g_flops, g_iops, total_params, sparsity, min_mem_con
     log.info('Network status information file name: %s', file_name)
 
 
-def get_layer_params(layer_provider):
+def get_layer_params(layer_provider: LayerType) -> str:
     params = []
 
     layer_params = layer_provider.params

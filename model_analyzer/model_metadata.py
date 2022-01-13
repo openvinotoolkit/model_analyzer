@@ -440,6 +440,9 @@ class ModelMetaData:
 
         layers_types = self.layer_types
 
+        if len(self.model.inputs) > 1:
+            return False
+
         input_layer = self.model.input()
 
         output_layer = self.outputs[0]
@@ -468,12 +471,16 @@ class ModelMetaData:
         return 'MVN' in layers_types
 
     def _is_super_resolution(self) -> bool:
+
+        if len(self.outputs) or not self._all_outputs_are_image():
+            return False
+
         single_stream = len(self.input_names) == 1 and len(self.outputs) == 1
         double_stream = len(self.input_names) == 2 and len(self.outputs) == 1
 
         input_shapes = [get_shape_for_node_safely(candidate) for candidate in self.input_layers]
-        output_shape = [self._get_output_shape(candidate)
-                        for candidate in self.outputs][0]
+
+        output_shape = next(self._get_output_shape(candidate) for candidate in self.outputs)
 
         # Super-resolution network should return a valid RGB/grayscale image
         # Check the number of color channels and output dimensions
@@ -482,13 +489,11 @@ class ModelMetaData:
 
         proportional_dims = False
         if single_stream:
-            proportional_dims = input_shapes[0][2] / output_shape[2] == \
-                                input_shapes[0][3] / output_shape[3]
+            proportional_dims = input_shapes[0][2] / output_shape[2] == input_shapes[0][3] / output_shape[3]
         elif double_stream:
             for input_shape in input_shapes:
                 if input_shape[2] != output_shape[2]:
-                    proportional_dims = input_shape[2] / output_shape[2] == \
-                                        input_shape[3] / output_shape[3]
+                    proportional_dims = input_shape[2] / output_shape[2] == input_shape[3] / output_shape[3]
 
         return single_stream or double_stream and proportional_dims
 
@@ -521,6 +526,8 @@ class ModelMetaData:
         if len(self.outputs) == 1:
             output_layer = self.outputs[0]
             output_shapes = self._get_output_shape(output_layer)
+            if len(output_shapes) < 4:
+                return False
             reduced_dims = output_shapes[2] == output_shapes[3] == 1
 
         return 'PRelu' in layers_types and reduced_dims

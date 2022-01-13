@@ -142,7 +142,7 @@ class LayerType(metaclass=MetaClass):
             else:
                 if source_node.get_type_name() in {'Reshape', 'Convert'}:
                     source_node = source_node.input(0).get_source_output().get_node()
-                elif source_node.get_type_name() == 'Constant':
+                if source_node.get_type_name() == 'Constant':
                     blob = LayerTypesManager.provider(source_node).get_data()
                     result[source_node.get_friendly_name()] = float(reduce(operator.mul, self.get_input_shape(i), 1)), (blob == 0).sum()
         return result
@@ -153,7 +153,6 @@ class LayerType(metaclass=MetaClass):
 
     @staticmethod
     def unpack(data):
-
         # skip big blobs unpack due to OOM error
         if data.nbytes > 500 * 1024 * 1024:
             return data

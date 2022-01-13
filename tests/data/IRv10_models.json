@@ -85,8 +85,8 @@
     "analysis_report": {
       "GFLOPs": 2.855,
       "GIOPs": 0.0,
-      "MParams": 1.053,
-      "MinMem": 7.2253,
+      "MParams": 1.2148,
+      "MinMem": 7.9995,
       "MaxMem": 62.5695
     }
   },
@@ -97,8 +97,8 @@
     "analysis_report": {
       "GFLOPs": 1.0711,
       "GIOPs": 0.0,
-      "MParams": 0.5882,
-      "MinMem": 1.44,
+      "MParams": 0.6142,
+      "MinMem": 1.71,
       "MaxMem": 16.07
     },
     "name": "face-detection-retail-0004"
@@ -110,8 +110,8 @@
     "analysis_report": {
       "GFLOPs": 0.9912,
       "GIOPs": 0.0,
-      "MParams": 1.0208,
-      "MinMem": 3.24,
+      "MParams": 1.0468,
+      "MinMem": 3.51,
       "MaxMem": 32.3386
     },
     "name": "face-detection-retail-0005"
@@ -240,8 +240,8 @@
     "analysis_report": {
       "GFLOPs": 3.9975,
       "GIOPs": 0.0,
-      "MParams": 1.6497,
-      "MinMem": 8.2575,
+      "MParams": 1.8437,
+      "MinMem": 9.0317,
       "MaxMem": 72.656
     },
     "name": "pedestrian-and-vehicle-detector-adas-0001"
@@ -253,8 +253,8 @@
     "analysis_report": {
       "GFLOPs": 2.8565,
       "GIOPs": 0.0,
-      "MParams": 1.1651,
-      "MinMem": 7.2253,
+      "MParams": 1.3592,
+      "MinMem": 7.9995,
       "MaxMem": 64.6795
     },
     "name": "pedestrian-detection-adas-0002"
@@ -279,8 +279,8 @@
     "analysis_report": {
       "GFLOPs": 7.1321,
       "GIOPs": 0.0,
-      "MParams": 1.9514,
-      "MinMem": 6.528,
+      "MParams": 1.9858,
+      "MinMem": 7.344,
       "MaxMem": 241.9452
     },
     "name": "person-detection-action-recognition-0005"
@@ -305,8 +305,8 @@
     "analysis_report": {
       "GFLOPs": 7.1321,
       "GIOPs": 0.0,
-      "MParams": 1.9514,
-      "MinMem": 6.528,
+      "MParams": 1.9858,
+      "MinMem": 7.344,
       "MaxMem": 241.9452
     },
     "name": "person-detection-action-recognition-teacher-0002"
@@ -318,8 +318,8 @@
     "analysis_report": {
       "GFLOPs": 7.131,
       "GIOPs": 0.0,
-      "MParams": 1.9509,
-      "MinMem": 6.528,
+      "MParams": 1.9853,
+      "MinMem": 7.344,
       "MaxMem": 241.9366
     },
     "name": "person-detection-raisinghand-recognition-0001"
@@ -344,8 +344,8 @@
     "analysis_report": {
       "GFLOPs": 2.295,
       "GIOPs": 0.0,
-      "MParams": 0.7229,
-      "MinMem": 4.1779,
+      "MParams": 0.7882,
+      "MinMem": 4.7002,
       "MaxMem": 109.5684
     },
     "name": "person-detection-retail-0013"
@@ -357,8 +357,8 @@
     "analysis_report": {
       "GFLOPs": 3.9558,
       "GIOPs": 0.0,
-      "MParams": 1.1785,
-      "MinMem": 6.2915,
+      "MParams": 1.9526,
+      "MinMem": 9.4372,
       "MaxMem": 171.0821
     },
     "name": "person-vehicle-bike-detection-crossroad-0078"
@@ -370,8 +370,8 @@
     "analysis_report": {
       "GFLOPs": 3.5939,
       "GIOPs": 0.0,
-      "MParams": 2.887,
-      "MinMem": 12.5829,
+      "MParams": 3.0805,
+      "MinMem": 13.3693,
       "MaxMem": 113.0185
     },
     "name": "person-vehicle-bike-detection-crossroad-1016"
@@ -383,8 +383,8 @@
     "analysis_report": {
       "GFLOPs": 3.6323,
       "GIOPs": 0.0,
-      "MParams": 3.2125,
-      "MinMem": 12.5829,
+      "MParams": 3.3107,
+      "MinMem": 13.3693,
       "MaxMem": 113.2173
     },
     "name": "product-detection-0001"
@@ -513,8 +513,8 @@
     "analysis_report": {
       "GFLOPs": 2.819,
       "GIOPs": 0.0,
-      "MParams": 1.0786,
-      "MinMem": 7.2253,
+      "MParams": 1.2647,
+      "MinMem": 7.9995,
       "MaxMem": 64.6628
     },
     "name": "vehicle-detection-adas-0002"
