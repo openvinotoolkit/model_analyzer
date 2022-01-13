@@ -15,7 +15,7 @@
 import operator
 import struct
 from functools import reduce
-from typing import List, Type, Tuple, Dict
+from typing import List, Type, Tuple, Dict, Iterable
 
 import numpy as np
 from openvino.runtime import Node
@@ -132,7 +132,7 @@ class LayerType(metaclass=MetaClass):
         input_channel = input_data.shape[channels_index]
         return input_channel
 
-    def _get_params(self, indexes: list) -> Dict[str, Tuple[int, int]]:
+    def _get_params(self, indexes: Iterable[int]) -> Dict[str, Tuple[int, int]]:
         result = {}
         for i in indexes:
             source_node = self.layer.input(i).get_source_output().get_node()
@@ -140,12 +140,11 @@ class LayerType(metaclass=MetaClass):
                 fq_provider = LayerTypesManager.provider(source_node)
                 result[source_node.get_friendly_name()] = fq_provider.get_quantized_params()
             else:
-                if source_node.get_type_name() in ['Reshape', 'Convert']:
+                if source_node.get_type_name() in {'Reshape', 'Convert'}:
                     source_node = source_node.input(0).get_source_output().get_node()
-                if source_node.get_type_name() == 'Constant':
+                elif source_node.get_type_name() == 'Constant':
                     blob = LayerTypesManager.provider(source_node).get_data()
-                    result[source_node.get_friendly_name()] = \
-                        float(reduce(operator.mul, self.get_input_shape(i), 1)), (blob == 0).sum()
+                    result[source_node.get_friendly_name()] = float(reduce(operator.mul, self.get_input_shape(i), 1)), (blob == 0).sum()
         return result
 
     def get_params(self) -> Dict[str, Tuple[int, int]]:

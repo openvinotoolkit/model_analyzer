@@ -43,6 +43,7 @@ class YoloAnchors(Enum):
 
 
 class LayoutTypes(Enum):
-    NCHW = 'NCHW'
-    NC = 'NC'
-    C = 'C'
+    NCHW = ['N', 'C', 'H', 'W']
+    NHWC = ['N', 'H', 'W', 'C']
+    NC = ['N', 'C']
+    C = ['C']

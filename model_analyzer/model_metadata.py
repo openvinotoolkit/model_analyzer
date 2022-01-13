@@ -13,6 +13,7 @@
       https://software.intel.com/content/dam/develop/external/us/en/documents/intel-openvino-license-agreements.pdf
 """
 import logging
+import re
 from contextlib import suppress
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
@@ -33,7 +34,7 @@ class ModelMetaData:
     def __init__(self, model_path: Path, weights_path: Path):
         self.model: Model = OPENVINO_CORE_SERVICE.read_model(str(model_path), str(weights_path))
 
-        self.ops = self.model.get_ordered_ops()
+        self.ops: List[Node] = self.model.get_ordered_ops()
 
         # Load network to get execution graph if needed before Constant Folding (WA for PriorBox)
         self.int8precisions, self.int8layers = self.get_exec_graph_int8layers()
@@ -83,18 +84,24 @@ class ModelMetaData:
         return [model_outputs.node for model_outputs in self.model.outputs]
 
     @property
-    def input_names(self) -> List[str]:
-        return [model_input.node.name for model_input in self.model.inputs]
+    def inputs(self) -> List[Node]:
+        return [model_input.node for model_input in self.model.inputs]
 
-    def get_layer_types(self) -> list:
+    @property
+    def input_names(self) -> List[str]:
+        return [model_input.name for model_input in self.inputs]
+
+    @property
+    def layer_types(self) -> List[str]:
         return [layer.get_type_name() for layer in self.ops]
 
     def find_input_info_layer(self) -> str:
         """Return the name of the IMAGE_INFO layer. Instance segmentation only."""
         result = None
-        for layer in self.input_names:
-            if self.model.input_info[layer].layout == LayoutTypes.NC.value:
-                result = layer
+        for index, input_node in enumerate(self.inputs):
+            layout = self._get_layout_for_input(index)
+            if layout == LayoutTypes.C:
+                result = input_node.friendly_name
                 break
         return result
 
@@ -120,9 +127,9 @@ class ModelMetaData:
 
         dims = {}
         for candidate in self.input_layers:
-            shape = candidate.get_partial_shape().to_shape()
+            shape = get_shape_for_node_safely(candidate)
             if shape[2]:
-                dims[candidate.get_friendly_name()] = shape[2]
+                dims[candidate.any_name] = shape[2]
         dims_sorted = [k for k, _ in sorted(dims.items(), key=lambda item: item[1])]
         roles['low-res'] = dims_sorted[0]
         roles['upsample'] = dims_sorted[1] if len(dims_sorted) > 1 else None
@@ -155,7 +162,7 @@ class ModelMetaData:
                 if self.network.outputs[candidate].layout == LayoutTypes.NCHW.value:
                     roles['raw_masks_out'] = candidate
 
-        return roles if roles else None
+        return roles or None
 
     def get_yolo_v2_params(self) -> dict:
         """Extract model params from the output layer of the model. YOLOv2/TinyYOLOv2 only."""
@@ -218,7 +225,7 @@ class ModelMetaData:
         if len(self.outputs) != 1:
             return None
 
-        layer_types = self.get_layer_types()
+        layer_types = self.layer_types
 
         if 'RegionYolo' in layer_types:
             operation = next(filter(lambda operation: operation.get_type_name() == 'RegionYolo', self.ops))
@@ -265,17 +272,10 @@ class ModelMetaData:
         return True if indicator else None
 
     @staticmethod
-    def get_shape_values(layouts: list, shapes: list) -> Dict[str, int]:
-        shape_values = {
-            'N': None,
-            'C': None,
-            'H': None,
-            'W': None
-        }
-        for dim in shape_values:
-            if dim in layouts:
-                shape_values[dim] = shapes[layouts.index(dim)]
-        return shape_values
+    def get_shape_values(layout: List[str], shape: List[int]) -> Dict[str, int]:
+        if len(layout) != len(shape):
+            return {}
+        return {l: d for l, d in zip(layout, shape)}
 
     def _get_anchors(self) -> Optional[List[float]]:
         region_yolo = [layer for layer in self.outputs if layer.get_type_name() == 'RegionYolo']
@@ -287,7 +287,7 @@ class ModelMetaData:
         return 'RegionYolo' not in [layer.get_type_name() for layer in self.outputs if layer.get_type_name()]
 
     def _is_yolo(self) -> bool:
-        layer_types = set(self.get_layer_types())
+        layer_types = set(self.layer_types)
         return 'RegionYolo' in layer_types
 
     def _is_yolo_v2(self) -> bool:
@@ -324,7 +324,7 @@ class ModelMetaData:
     def _check_single_image_input(self) -> bool:
         if not len(self.input_names) == 1:
             return False
-        return len(get_shape_for_node_safely(self.model.input)) == 4
+        return len(get_shape_for_node_safely(self.model.input())) == 4
 
     def _all_outputs_are_image(self) -> bool:
         return all(len(self._get_output_shape(output)) == 4 for output in self.outputs)
@@ -385,7 +385,7 @@ class ModelMetaData:
         if len(self.outputs) != 1:
             return False
 
-        layer_types = set(self.get_layer_types())
+        layer_types = set(self.layer_types)
         excluded_types = {'PRelu', 'NormalizeL2'}
         valid_layer_types = not layer_types & excluded_types
 
@@ -397,22 +397,23 @@ class ModelMetaData:
 
         if len(out_shape) == 2:
             return True
+
+        if len(out_shape) < 4:
+            return False
         reduced_shapes = out_shape[2] == out_shape[3] == 1 and out_shape[1] > 1
 
         # To qualify, the outputs' HW shapes must either be missing or equal 1
         return reduced_shapes and valid_layer_types
 
     def _is_ssd(self) -> bool:
-        layer_types = set(self.get_layer_types())
-        output_types = {layer.get_type_name() for layer in self.outputs}
-
-        return 'ROIPooling' not in layer_types and 'DetectionOutput' in output_types
+        layer_types = set(self.layer_types)
+        return 'ROIPooling' not in layer_types and 'DetectionOutput' in layer_types
 
     def _is_instance_segmentation(self) -> bool:
         if not self.xml:
             return False
 
-        layer_types = set(self.get_layer_types())
+        layer_types = set(self.layer_types)
         output_types = {layer.get_type_name() for layer in self.outputs}
 
         xml_layers = list(self.xml.getroot().find('layers'))
@@ -420,22 +421,24 @@ class ModelMetaData:
 
         # ONNX Instance Segmentation has at least 2 ROIFeatureExtractor layers
         # TF Instance Segmentation is similar to Faster-RCNN, but with additional layers after detection
-        return ('ROIPooling' in layer_types and 'DetectionOutput' not in output_types) \
-               or 'ExperimentalDetectronROIFeatureExtractor' in xml_layer_types
+        return (
+                ('ROIPooling' in layer_types and 'DetectionOutput' not in output_types)
+                or 'ExperimentalDetectronROIFeatureExtractor' in xml_layer_types
+        )
 
-    def _get_layout_for_input(self, input_index: int) -> Optional[str]:
-        layout = self.model.input(input_index).node.layout
-        return layout
+    def _get_layout_for_input(self, input_index: int) -> List[str]:
+        node = self.model.input(input_index).node
+        return ModelMetaData._parse_layout_to_array(node)
 
     def _is_semantic_segmentation(self) -> bool:
         if len(self.outputs) != 1:
             return False
 
-        convolutions = [layer for layer in self.ops if layer.get_type_name() in ['Convolution', 'GroupConvolution']]
+        convolutions = (layer for layer in self.ops if layer.get_type_name() in ('Convolution', 'GroupConvolution'))
         dilations = {str(layer.get_attributes()['dilations']) for layer in convolutions}
         dilations.discard(None)
 
-        layers_types = self.get_layer_types()
+        layers_types = self.layer_types
 
         input_layer = self.model.input()
 
@@ -443,23 +446,24 @@ class ModelMetaData:
         output_shape = self._get_output_shape(output_layer)
         output_dim = list(output_shape)[-2:]
 
-        input_layout = self._get_layout_for_input(0) # has only one input
+        input_layout = self._get_layout_for_input(0)  # has only one input
 
         input_shape = self.get_shape_values(input_layout, input_layer.shape)
-        input_dim = [input_shape['H'], input_shape['W']]
+
+        input_dim = [input_shape.get('H'), input_shape.get('W')]
 
         equal_dims = bool(input_dim == output_dim)
 
         return equal_dims and len(dilations) > 1 and 'Elu' not in layers_types
 
     def _is_inpainting(self) -> bool:
-        layers_types = set(self.get_layer_types())
+        layers_types = set(self.layer_types)
         inputs = self.input_names
 
         return 'Elu' in layers_types and len(inputs) == 2
 
     def _is_style_transfer(self) -> bool:
-        layers_types = set(self.get_layer_types())
+        layers_types = set(self.layer_types)
 
         return 'MVN' in layers_types
 
@@ -500,7 +504,7 @@ class ModelMetaData:
 
         output_layer = self.outputs[0]
         output_shapes = self._get_output_shape(output_layer)
-        layers_types = set(self.get_layer_types())
+        layers_types = set(self.layer_types)
 
         return {'PRelu', 'NormalizeL2'} & layers_types and len(output_shapes) == 2
 
@@ -511,7 +515,7 @@ class ModelMetaData:
                 1) Uses PRelu activation functions;
                 2) Single output with NCHW shape, H and W shapes reduced to 1px.
         """
-        layers_types = set(self.get_layer_types())
+        layers_types = set(self.layer_types)
 
         reduced_dims = False
         if len(self.outputs) == 1:
@@ -569,3 +573,19 @@ class ModelMetaData:
     @staticmethod
     def _get_output_shape(layer: Node, port: int = 0) -> List[int]:
         return get_shape_for_node_safely(layer.output(port))
+
+    @staticmethod
+    def _parse_layout_to_array(node: Node) -> List[str]:
+        layout_str = str(node.get_layout())
+        layout_match = re.search(r'\[(?P<layout>.*)]', layout_str)
+        if not layout_match:
+            return ['?', ]
+        clear_layout = layout_match.group('layout')
+        if clear_layout == '...':
+            return ModelMetaData._get_fully_undefined_layout(node)
+        return [dim for dim in clear_layout.split(',')]
+
+    @staticmethod
+    def _get_fully_undefined_layout(node: Node) -> List[str]:
+        shape = get_shape_for_node_safely(node)
+        return ['?' for _ in shape]

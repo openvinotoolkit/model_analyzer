@@ -83,4 +83,4 @@ class GenericE2ETestCase:
     @staticmethod
     def compare_float_dictionaries(actual, expected):
         for key, value in expected.items():
-            assert math.isclose(value, actual[key], rel_tol=1e-02), f"Expected {key} value {value}, received {actual[key]}"
+            assert math.isclose(value, actual[key], rel_tol=1e-02), f'Expected {key} value {value}, received {actual[key]}'

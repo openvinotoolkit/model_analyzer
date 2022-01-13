@@ -23,6 +23,9 @@ from model_analyzer.model_metadata import ModelMetaData
 
 
 # pylint: disable=too-many-instance-attributes
+from model_analyzer.value_converter import ValueConverter
+
+
 class NetworkComputationalComplexity:
     def __init__(self, metadata: ModelMetaData):
         self.net_metadata = metadata
@@ -72,7 +75,7 @@ class NetworkComputationalComplexity:
                 if layer_provider.name in self.ignored_layers:
                     continue
                 parameters['zero_params'] += zeros
-            self.computational_complexity[layer_provider.name]['m_params'] = params / 1000000.0
+            self.computational_complexity[layer_provider.name]['m_params'] = ValueConverter.to_giga(params)
         return parameters
 
     @staticmethod
