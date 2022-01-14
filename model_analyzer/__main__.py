@@ -19,7 +19,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Tuple
 
-from model_analyzer.network_complexity import NetworkComputationalComplexity
+from model_analyzer.model_complexity import ModelComputationalComplexity
 from model_analyzer.model_metadata import ModelMetaData
 
 
@@ -93,17 +93,17 @@ def process_model_files(cli_args) -> Tuple[Path, Path]:
 def main(cli_args):
     log.info('Loading network files:\n\t%s\n\t%s', cli_args.model, cli_args.weights)
 
-    network_metadata = ModelMetaData(cli_args.model, cli_args.weights)
+    model_metadata = ModelMetaData(cli_args.model, cli_args.weights)
 
-    network_computational_complexity = NetworkComputationalComplexity(network_metadata)
-    network_computational_complexity.set_ignore_unknown_layers(cli_args.ignore_unknown_layers)
+    model_computational_complexity = ModelComputationalComplexity(model_metadata)
+    model_computational_complexity.set_ignore_unknown_layers(cli_args.ignore_unknown_layers)
 
     sparsity_ignored_layers = cli_args.sparsity_ignored_layers.split(',')
-    network_computational_complexity.set_ignored_layers(sparsity_ignored_layers,
+    model_computational_complexity.set_ignored_layers(sparsity_ignored_layers,
                                                         cli_args.sparsity_ignore_first_conv,
                                                         cli_args.sparsity_ignore_fc)
 
-    network_computational_complexity.print_network_info(cli_args.report_dir,
+    model_computational_complexity.print_network_info(cli_args.report_dir,
                                                         cli_args.model_report,
                                                         cli_args.per_layer_mode,
                                                         cli_args.per_layer_report)

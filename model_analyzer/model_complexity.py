@@ -26,7 +26,7 @@ from model_analyzer.model_metadata import ModelMetaData
 from model_analyzer.value_converter import ValueConverter
 
 
-class NetworkComputationalComplexity:
+class ModelComputationalComplexity:
     def __init__(self, metadata: ModelMetaData):
         self._model_metadata = metadata
         self._layer_providers = [LayerTypesManager.provider(layer) for layer in self._model_metadata.ops]
