@@ -18,6 +18,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
 from xml.etree import ElementTree
+import heapq
 
 # pylint: disable=import-error
 from openvino.runtime import Node, Model
@@ -37,12 +38,12 @@ class ModelMetaData:
 
         self.ops: List[Node] = self.model.get_ordered_ops()
 
-        # Load network to get execution graph if needed before Constant Folding (WA for PriorBox)
+        # Compile model to get execution graph if needed before Constant Folding (WA for PriorBox)
         self.int8precisions, self.int8layers = self.get_exec_graph_int8layers()
 
         self._constant_folding()
 
-        self.is_onnx = model_path.suffix in ('.onnx', '.prototxt')
+        self._model_file_suffix = model_path.suffix
         self.xml = None if self.is_onnx else ElementTree.parse(model_path)
 
         self.input_layers = [model_input.node for model_input in self.model.inputs]
@@ -56,6 +57,10 @@ class ModelMetaData:
         # pylint: disable=broad-except
         except Exception as exception:
             logging.error(exception, exc_info=True)
+
+    @property
+    def is_onnx(self) -> bool:
+        return self._model_file_suffix in ('.onnx', '.prototxt')
 
     def get_ir_version(self) -> Optional[int]:
         """Return IR version or `None` if the attribute is absent."""
@@ -77,7 +82,9 @@ class ModelMetaData:
     def is_obsolete(self) -> bool:
         return not bool(self.model)
 
-    def get_framework(self):
+    def get_framework(self) -> str:
+        if self.is_onnx:
+            return 'onnx'
         return self.xml.find('./meta_data/cli_parameters/framework').attrib['value']
 
     @property
@@ -187,7 +194,7 @@ class ModelMetaData:
         return params
 
     def is_argmax_used(self):
-        """Return info on whether the network output is argmaxed. Semantic Segmentation only"""
+        """Return info on whether the model output is argmaxed. Semantic Segmentation only"""
         output_layer = self.outputs[0]
         output_shape = self.get_shape_values(output_layer.layout, output_layer.shape)
 
@@ -317,7 +324,7 @@ class ModelMetaData:
 
     def _is_yolo_like(self, output_count: int) -> bool:
         """
-        Special check for networks that dont have RegionYolo outputs.
+        Special check for models that dont have RegionYolo outputs.
         Criteria: single image input and outputs with proportional shapes
         (or single image output with odd number of cells).
         """
@@ -445,20 +452,16 @@ class ModelMetaData:
 
         layers_types = self.layer_types
 
-        if len(self.model.inputs) > 1:
+        if len(self.inputs) > 1:
             return False
 
-        input_layer = self.model.input()
+        input_layer = self.inputs[0]
 
         output_layer = self.outputs[0]
         output_shape = self._get_output_shape(output_layer)
         output_dim = list(output_shape)[-2:]
-
-        input_layout = self._get_layout_for_input(0)  # has only one input
-
-        input_shape = self.get_shape_values(input_layout, input_layer.shape)
-
-        input_dim = [input_shape.get('H'), input_shape.get('W')]
+        input_shape = get_shape_for_node_safely(input_layer)
+        input_dim = list(input_shape)[-2:]
 
         equal_dims = bool(input_dim == output_dim)
 
@@ -487,7 +490,7 @@ class ModelMetaData:
 
         output_shape = next(self._get_output_shape(candidate) for candidate in self.outputs)
 
-        # Super-resolution network should return a valid RGB/grayscale image
+        # Super-resolution model should return a valid RGB/grayscale image
         # Check the number of color channels and output dimensions
         if output_shape[1] not in (1, 3) or len(output_shape) == 2 or output_shape[2] == output_shape[3] == 1:
             return False
