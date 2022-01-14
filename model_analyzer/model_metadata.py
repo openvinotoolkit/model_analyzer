@@ -100,6 +100,10 @@ class ModelMetaData:
         return [model_input.name for model_input in self.inputs]
 
     @property
+    def output_names(self) -> List[str]:
+        return [model_input.name for model_input in self.outputs]
+
+    @property
     def layer_types(self) -> List[str]:
         return [layer.get_type_name() for layer in self.ops]
 
