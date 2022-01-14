@@ -179,6 +179,7 @@ class NetworkComputationalComplexity:
         log.info('Guessed type: %s', guessed_type)
         export_network_into_csv(g_flops, g_iops, total_params, sparsity, min_mem_consumption, max_mem_consumption,
                                 net_precisions, output, file_name, guessed_type)
+        print(self._model_metadata.analyze_output_roles())
         if complexity:
             self.export_layers_into_csv(output, complexity_filename)
 

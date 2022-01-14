@@ -141,28 +141,39 @@ class ModelMetaData:
         roles = {}
         framework = self.get_framework()
         if framework == 'onnx':
-            for candidate in self.outputs:
-                precision = candidate.get_output_element_type(0).get_type_name()
-                if precision in {'i32', 'i16'}:
-                    roles['classes_out'] = candidate
-                    continue
-                elif precision in {'fP32', 'fP16'} and self.network.outputs[candidate].layout == LayoutTypes.C.value:
-                    roles['scores_out'] = candidate
-                    continue
-                if self.network.outputs[candidate].layout == LayoutTypes.NC.value:
-                    roles['boxes_out'] = candidate
-                    continue
-                if self.network.outputs[candidate].layout == LayoutTypes.NCHW.value:
-                    roles['raw_masks_out'] = candidate
-        if framework == 'tf':
-            for candidate in self.outputs:
-                if self.network.outputs[candidate].layout == LayoutTypes.NC.value:
-                    roles['detection_out'] = candidate
-                    continue
-                if self.network.outputs[candidate].layout == LayoutTypes.NCHW.value:
-                    roles['raw_masks_out'] = candidate
-
+            roles = self._get_output_roles_for_instance_segm_from_onnx()
+        elif framework == 'tf':
+            roles = self._get_output_roles_for_instance_segm_from_tf()
         return roles or None
+
+    def _get_output_roles_for_instance_segm_from_onnx(self):
+        roles = {}
+        for result in self.outputs:
+            result_precision = result.get_output_element_type(0).get_type_name()
+            result_shape = get_shape_for_node_safely(result.input(0))
+            if result_precision in {'i32', 'i16'}:
+                roles['classes_out'] = result_shape
+                continue
+            elif result_precision in {'fP32', 'fP16'} and len(result_shape) == 1: # Layout is C
+                roles['scores_out'] = result.name
+                continue
+            if len(result_shape) == 2: # Layout is NC
+                roles['boxes_out'] = result.name
+                continue
+            if len(result_shape) == 2: # Layout is NCHW
+                roles['raw_masks_out'] = result.name
+        return roles
+
+    def _get_output_roles_for_instance_segm_from_tf(self):
+        roles = {}
+        for result in self.outputs:
+            result_shape = get_shape_for_node_safely(result.input(0))
+            if len(result_shape) == 2: # and better add check for layout == NC
+                roles['detection_out'] = result.name
+                continue
+            if len(result_shape) == 4: # and better add check for layout == NCHW
+                roles['raw_masks_out'] = result.name
+        return roles
 
     def get_yolo_v2_params(self) -> dict:
         """Extract model params from the output layer of the model. YOLOv2/TinyYOLOv2 only."""
@@ -207,17 +218,10 @@ class ModelMetaData:
     def is_winograd(self) -> bool:
         """Return True if the model was adapted for Winograd algorithm."""
 
-        if self.model:
-            for layer in self.ops:
-                if layer.get_type_name() == 'Convolution' and 'PrimitivesPriority' in layer.rt_info and \
-                        'cpu:jit_avx512_winograd' in layer.rt_info['PrimitivesPriority'].get():
-                    return True
-        else:
-            for layer in self.network.layers.values():
-                if layer.type == 'Convolution' and 'cpu:jit_avx512_winograd' in \
-                        layer.params.get('PrimitivesPriority', ''):
-                    return True
-
+        for layer in self.ops:
+            if layer.get_type_name() == 'Convolution' and 'PrimitivesPriority' in layer.rt_info and \
+                    'cpu:jit_avx512_winograd' in layer.rt_info['PrimitivesPriority'].get():
+                return True
         return False
 
     def get_num_classes(self) -> Optional[int]:
