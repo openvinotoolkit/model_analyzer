@@ -18,6 +18,8 @@ from functools import reduce
 from typing import List, Type, Tuple, Dict, Iterable
 
 import numpy as np
+
+# pylint: disable=import-error
 from openvino.runtime import Node
 
 from model_analyzer.shape_utils import get_shape_for_node_safely
@@ -144,7 +146,10 @@ class LayerType(metaclass=MetaClass):
                     source_node = source_node.input(0).get_source_output().get_node()
                 if source_node.get_type_name() == 'Constant':
                     blob = LayerTypesManager.provider(source_node).get_data()
-                    result[source_node.get_friendly_name()] = float(reduce(operator.mul, self.get_input_shape(i), 1)), (blob == 0).sum()
+                    result[source_node.get_friendly_name()] = (
+                        float(reduce(operator.mul, self.get_input_shape(i), 1)),
+                        (blob == 0).sum()
+                    )
         return result
 
     def get_params(self) -> Dict[str, Tuple[int, int]]:

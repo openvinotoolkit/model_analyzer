@@ -28,6 +28,7 @@ from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
 
+# pylint: disable=too-many-public-methods
 class ModelMetaData:
     """Retrieve IR metadata using heuristics."""
 
@@ -476,7 +477,7 @@ class ModelMetaData:
 
     def _is_super_resolution(self) -> bool:
 
-        if len(self.outputs) or not self._all_outputs_are_image():
+        if self.outputs or not self._all_outputs_are_image():
             return False
 
         single_stream = len(self.input_names) == 1 and len(self.outputs) == 1

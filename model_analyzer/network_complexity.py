@@ -258,7 +258,7 @@ class NetworkComputationalComplexity:
         for layer_provider in self._layer_providers:
             if layer_provider.type.lower() == 'convolution':
                 all_convs.append(layer_provider.name)
-            elif layer_provider.type.lower() == 'fullyconnected':
+            elif layer_provider.type.lower() == 'fullyconnected' and ignore_fc:
                 self._ignored_layers.append(layer_provider.name)
             elif layer_provider.type.lower() == 'scaleshift':
                 self._ignored_layers.extend(layer_provider.name)
