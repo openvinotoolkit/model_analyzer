@@ -18,7 +18,6 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
 from xml.etree import ElementTree
-import heapq
 
 # pylint: disable=import-error
 from openvino.runtime import Node, Model, ConstOutput
@@ -180,19 +179,19 @@ class ModelMetaData:
     def _get_output_roles_for_instance_segm_from_tf(self):
         roles = {}
         for result in self.outputs:
-            result_shape = get_shape_for_node_safely(result.input(0))
-            if len(result_shape) == 2: # and better add check for layout == NC
-                roles['detection_out'] = result.name
+            result_shape = get_shape_for_node_safely(result)
+            if len(result_shape) == 2:  # and better add check for layout == NC
+                roles['detection_out'] = result.any_name
                 continue
-            if len(result_shape) == 4: # and better add check for layout == NCHW
-                roles['raw_masks_out'] = result.name
+            if len(result_shape) == 4:  # and better add check for layout == NCHW
+                roles['raw_masks_out'] = result.any_name
         return roles
 
     def get_yolo_v2_params(self) -> dict:
         """Extract model params from the output layer of the model. YOLOv2/TinyYOLOv2 only."""
         params = {}
         relevant_attributes = ['classes', 'coords', 'num']
-        output_attributes = self.outputs[0].get_attributes()
+        output_attributes = self.outputs[0].node.get_attributes()
         for attribute in relevant_attributes:
             params[attribute] = output_attributes.get(attribute)
 
@@ -268,12 +267,9 @@ class ModelMetaData:
 
         output = self.outputs[0]
 
-        if isinstance(output, Node):
-            output_type = output.get_type_name().lower()
-            params = output.get_attributes()
-        else:
-            output_type = output.type.lower()
-            params = output.params
+        node = output.node
+        output_type = node.get_type_name().lower()
+        params = node.get_attributes()
 
         indicator = False
         if output_type == 'regionyolo':
@@ -281,10 +277,7 @@ class ModelMetaData:
         elif output_type == 'detectionoutput':
             indicator = 'attrs.background_label_id' in params or 'background_label_id' in params
         elif output_type == 'softmax':
-            if isinstance(output, Node):
-                shape = self._get_output_shape(output)
-            else:
-                shape = output.out_data[0].shape
+            shape = self._get_output_shape(output)
             indicator = len(shape) == 2 and shape[1] == 1001
         return True if indicator else None
 
