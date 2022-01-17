@@ -20,7 +20,7 @@ from typing import Dict, Optional, Tuple, List
 from xml.etree import ElementTree
 
 # pylint: disable=import-error
-from openvino.runtime import Node, Model, ConstOutput
+from openvino.runtime import Node, Model, ConstOutput, Core
 from openvino.runtime.passes import Manager
 
 from model_analyzer.constants import ModelTypes, YoloAnchors, LayoutTypes
@@ -546,38 +546,32 @@ class ModelMetaData:
         int8layers = []
         int8precisions = set()
         # pylint: disable=too-many-nested-blocks
-        if self.is_int8():
-            compiled_model = OPENVINO_CORE_SERVICE.compile_model(self.model, 'CPU')
-            layers_with_one_inputs = {
-                'convolution', 'deconvolution',
-                'fullyconnected', 'gemm', 'pooling'
-            }
-            try:
-                execution_model = compiled_model.get_exec_graph_info()
-                for layer in execution_model.get_ordered_ops():
-                    rt_info = layer.get_rt_info()
-                    layer_type = rt_info['layerType'].get()
-                    inputs_number = 1 if layer_type.lower() in layers_with_one_inputs else len(layer.inputs())
-                    input_precisions = [
-                        layer.input(i).get_source_output().get_node().get_rt_info()['outputPrecisions'].get().lower()
-                        for i in range(inputs_number)]
-                    search_precisions = {'i8', 'u8'}
-                    for precision in search_precisions:
-                        if precision in input_precisions:
-                            int8precisions.add(precision)
-                    is_int8 = all(p in search_precisions for p in input_precisions) and input_precisions
-                    if is_int8:
-                        original_layers_names = rt_info['originalLayersNames'].get()
-                        if original_layers_names:
-                            original_layers_names = original_layers_names.split(',')
-                            int8layers += original_layers_names
-            finally:  # Avoiding IE Python API crash with SIGSEGV.
-                with suppress(NameError):
-                    del rt_info
-                with suppress(NameError):
-                    # pylint: disable=W0631
-                    del layer
-                del execution_model
+        if not self.is_int8():
+            return [], []
+        core = Core()
+        compiled_model = core.compile_model(self.network, 'CPU')
+        runtime_model = compiled_model.get_runtime_model()
+        for execution_node in runtime_model.get_ordered_ops():
+            rt_info = execution_node.get_rt_info()
+            layer_type = rt_info['layerType']
+            inputs_number = (
+                1 if layer_type.lower() in {'convolution', 'deconvolution', 'fullyconnected', 'gemm', 'pooling'}
+                else len(execution_node.inputs())
+            )
+            input_precisions = [
+                execution_node.input(i).get_source_output().node.get_rt_info()['outputPrecisions'].lower()
+                for i in range(inputs_number)]
+            search_precisions = ['i8', 'u8']
+            for precision in search_precisions:
+                if precision in input_precisions:
+                    int8precisions.add(precision)
+            is_int8 = all(p in search_precisions for p in input_precisions) and input_precisions
+            if is_int8:
+                original_layers_names = rt_info['originalLayersNames'].get()
+                if original_layers_names:
+                    original_layers_names = original_layers_names.split(',')
+                    int8layers += original_layers_names
+
         return list(int8precisions), int8layers
 
     def is_model_dynamic(self) -> bool:
