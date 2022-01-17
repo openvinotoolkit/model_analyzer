@@ -19,11 +19,11 @@ from typing import List, Union
 from openvino.runtime import Output, Input, PartialShape
 
 
-def get_shape_for_node_safely(node: Union[Input, Output]) -> List[int]:
-    partial_shape = node.get_partial_shape()
+def get_shape_for_node_safely(io_node: Union[Input, Output]) -> List[int]:
+    partial_shape = io_node.get_partial_shape()
     if partial_shape.is_dynamic:
-        node = node.get_node()
-        logging.warning('%s layer of type %s has dynamic output shape.', node.get_friendly_name(), node.get_type_name())
+        node = io_node.node
+        logging.warning('%s layer of type %s has dynamic output shape.', node.any_name, node.get_type_name())
         return get_shape_safely(partial_shape)
     return [s for s in partial_shape.to_shape()]
 

@@ -21,7 +21,7 @@ from xml.etree import ElementTree
 import heapq
 
 # pylint: disable=import-error
-from openvino.runtime import Node, Model
+from openvino.runtime import Node, Model, ConstOutput
 from openvino.runtime.passes import Manager
 
 from model_analyzer.constants import ModelTypes, YoloAnchors, LayoutTypes
@@ -88,20 +88,20 @@ class ModelMetaData:
         return self.xml.find('./meta_data/cli_parameters/framework').attrib['value']
 
     @property
-    def outputs(self) -> List[Node]:
-        return [model_outputs.node for model_outputs in self.model.outputs]
+    def outputs(self) -> List[ConstOutput]:
+        return [model_outputs for model_outputs in self.model.outputs]
 
     @property
-    def inputs(self) -> List[Node]:
-        return [model_input.node for model_input in self.model.inputs]
+    def inputs(self) -> List[ConstOutput]:
+        return [model_input for model_input in self.model.inputs]
 
     @property
     def input_names(self) -> List[str]:
-        return [model_input.name for model_input in self.inputs]
+        return [model_input.any_name for model_input in self.inputs]
 
     @property
     def output_names(self) -> List[str]:
-        return [model_input.name for model_input in self.outputs]
+        return [model_input.any_name for model_input in self.outputs]
 
     @property
     def layer_types(self) -> List[str]:
@@ -161,19 +161,20 @@ class ModelMetaData:
     def _get_output_roles_for_instance_segm_from_onnx(self):
         roles = {}
         for result in self.outputs:
-            result_precision = result.get_output_element_type(0).get_type_name()
-            result_shape = get_shape_for_node_safely(result.input(0))
+            node = result.node
+            result_precision = node.get_output_element_type(0).get_type_name()
+            result_shape = get_shape_for_node_safely(result)
             if result_precision in {'i32', 'i16'}:
                 roles['classes_out'] = result_shape
                 continue
-            elif result_precision in {'fP32', 'fP16'} and len(result_shape) == 1: # Layout is C
-                roles['scores_out'] = result.name
+            elif result_precision in {'fP32', 'fP16'} and len(result_shape) == 1:  # Layout is C
+                roles['scores_out'] = result.any_name
                 continue
-            if len(result_shape) == 2: # Layout is NC
-                roles['boxes_out'] = result.name
+            if len(result_shape) == 2:  # Layout is NC
+                roles['boxes_out'] = result.any_name
                 continue
-            if len(result_shape) == 2: # Layout is NCHW
-                roles['raw_masks_out'] = result.name
+            if len(result_shape) == 2:  # Layout is NCHW
+                roles['raw_masks_out'] = result.any_name
         return roles
 
     def _get_output_roles_for_instance_segm_from_tf(self):
@@ -332,7 +333,7 @@ class ModelMetaData:
         Criteria: single image input and outputs with proportional shapes
         (or single image output with odd number of cells).
         """
-        if self._all_outputs_are_image() and len(self.outputs) == output_count:
+        if self._all_outputs_are_images() and len(self.outputs) == output_count:
             return self._check_single_image_input() and self._check_output_shape_proportions()
 
         return False
@@ -342,7 +343,7 @@ class ModelMetaData:
             return False
         return len(get_shape_for_node_safely(self.model.input())) == 4
 
-    def _all_outputs_are_image(self) -> bool:
+    def _all_outputs_are_images(self) -> bool:
         return all(len(self._get_output_shape(output)) == 4 for output in self.outputs)
 
     def _check_output_shape_proportions(self) -> bool:
@@ -430,7 +431,7 @@ class ModelMetaData:
             return False
 
         layer_types = set(self.layer_types)
-        output_types = {layer.get_type_name() for layer in self.outputs}
+        output_types = {output.node.get_type_name() for output in self.outputs}
 
         xml_layers = list(self.xml.getroot().find('layers'))
         xml_layer_types = [layer.attrib.get('type') for layer in xml_layers]
@@ -484,7 +485,7 @@ class ModelMetaData:
 
     def _is_super_resolution(self) -> bool:
 
-        if self.outputs or not self._all_outputs_are_image():
+        if self.outputs or not self._all_outputs_are_images():
             return False
 
         single_stream = len(self.input_names) == 1 and len(self.outputs) == 1
@@ -590,8 +591,8 @@ class ModelMetaData:
         return self.model.is_dynamic()
 
     @staticmethod
-    def _get_output_shape(layer: Node, port: int = 0) -> List[int]:
-        return get_shape_for_node_safely(layer.output(port))
+    def _get_output_shape(output: ConstOutput) -> List[int]:
+        return get_shape_for_node_safely(output)
 
     @staticmethod
     def _parse_layout_to_array(node: Node) -> List[str]:
