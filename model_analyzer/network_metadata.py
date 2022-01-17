@@ -612,8 +612,8 @@ class NetworkMetaData:
         return shape
 
     @staticmethod
-    def get_shape_for_parameter_safely(parameter) -> List[int]:
-        partial_shape = parameter.get_partial_shape()
+    def get_shape_for_node_safely(node: Node) -> List[int]:
+        partial_shape = node.get_partial_shape()
         if partial_shape.is_dynamic:
             return NetworkMetaData._get_shape_safely(partial_shape)
         return [s for s in partial_shape.to_shape()]
@@ -623,7 +623,7 @@ class NetworkMetaData:
         input_shapes = {}
         for parameter in parameters:
             input_name = parameter.get_friendly_name()
-            input_shapes[input_name] = self.get_shape_for_parameter_safely(parameter)
+            input_shapes[input_name] = self.get_shape_for_node_safely(parameter)
 
         return input_shapes
 
