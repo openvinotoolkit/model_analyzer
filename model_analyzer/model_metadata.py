@@ -295,13 +295,13 @@ class ModelMetaData:
         return {l: d for l, d in zip(layout, shape)}
 
     def _get_anchors(self) -> Optional[List[float]]:
-        region_yolo = [layer for layer in self.outputs if layer.get_type_name() == 'RegionYolo']
+        region_yolo = [output for output in self.outputs if output.node.get_type_name() == 'RegionYolo']
         if region_yolo:
             return region_yolo[0].get_attributes().get('anchors', [])
         return None
 
     def yolo_has_raw_output(self) -> bool:
-        return 'RegionYolo' not in [layer.get_type_name() for layer in self.outputs if layer.get_type_name()]
+        return 'RegionYolo' not in [output.node.get_type_name() for output in self.outputs]
 
     def _is_yolo(self) -> bool:
         layer_types = set(self.layer_types)
