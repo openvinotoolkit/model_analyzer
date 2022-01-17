@@ -46,7 +46,7 @@ class ModelComputationalComplexity:
             self._computational_complexity[layer_provider.name]['input_blob'] = input_blob
             self._computational_complexity[layer_provider.name]['output_blob'] = output_blob
 
-        self._net_precisions = list(net_precisions.union(self._model_metadata.int8precisions))
+        self._executable_precisions = list(net_precisions.union(self._model_metadata.int8precisions))
         self._params_const_layers = set()
 
     @property
@@ -64,6 +64,10 @@ class ModelComputationalComplexity:
             for layer_provider in self._layer_providers
             if isinstance(layer_provider, Parameter)
         )
+
+    @property
+    def executable_precisions(self):
+        return self._executable_precisions
 
     @property
     def model(self):
@@ -165,8 +169,8 @@ class ModelComputationalComplexity:
         sparsity = zero_params / total_parameters * 100
         min_mem_consumption = self.get_minimum_memory_consumption() / 1000000.0
         max_mem_consumption = self.get_maximum_memory_consumption() / 1000000.0
-        net_precisions = self._net_precisions.pop() if len(self._net_precisions) == 1 else 'MIXED (' + '-'.join(
-            sorted(self._net_precisions)) + ')'
+        net_precisions = self._executable_precisions.pop() if len(self._executable_precisions) == 1 else 'MIXED (' + '-'.join(
+            sorted(self._executable_precisions)) + ')'
         guessed_type = self._model_metadata.guess_topology_type()
         if guessed_type:
             guessed_type = guessed_type.value
