@@ -110,8 +110,8 @@ class ModelMetaData:
         result = None
         for input_node in self.inputs:
             shape = get_shape_for_node_safely(input_node)
-            if len(shape) == 1:
-                result = input_node.friendly_name
+            if len(shape) == 2:
+                result = input_node.any_name
                 break
         return result
 
@@ -565,7 +565,7 @@ class ModelMetaData:
                     int8precisions.add(precision)
             is_int8 = all(p in search_precisions for p in input_precisions) and input_precisions
             if is_int8:
-                original_layers_names = rt_info['originalLayersNames'].get()
+                original_layers_names = rt_info['originalLayersNames']
                 if original_layers_names:
                     original_layers_names = original_layers_names.split(',')
                     int8layers += original_layers_names
