@@ -169,8 +169,11 @@ class ModelComputationalComplexity:
         sparsity = zero_params / total_parameters * 100
         min_mem_consumption = self.get_minimum_memory_consumption() / 1000000.0
         max_mem_consumption = self.get_maximum_memory_consumption() / 1000000.0
-        net_precisions = self._executable_precisions.pop() if len(self._executable_precisions) == 1 else 'MIXED (' + '-'.join(
-            sorted(self._executable_precisions)) + ')'
+        net_precisions = (
+            self._executable_precisions.pop()
+            if len(self._executable_precisions) == 1 else
+            f'MIXED ({"-".join(sorted(self._executable_precisions))})'
+        )
         guessed_type = self._model_metadata.guess_topology_type()
         if guessed_type:
             guessed_type = guessed_type.value

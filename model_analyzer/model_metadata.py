@@ -14,7 +14,6 @@
 """
 import logging
 import re
-from contextlib import suppress
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
 from xml.etree import ElementTree
@@ -548,7 +547,7 @@ class ModelMetaData:
         if not self.is_int8():
             return [], []
         core = Core()
-        compiled_model = core.compile_model(self.network, 'CPU')
+        compiled_model = core.compile_model(self.model, 'CPU')
         runtime_model = compiled_model.get_runtime_model()
         for execution_node in runtime_model.get_ordered_ops():
             rt_info = execution_node.get_rt_info()
