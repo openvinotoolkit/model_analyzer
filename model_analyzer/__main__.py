@@ -94,14 +94,7 @@ def main(cli_args):
     log.info('Loading network files:\n\t%s\n\t%s', cli_args.model, cli_args.weights)
 
     model_metadata = ModelMetaData(cli_args.model, cli_args.weights)
-    roles = model_metadata.analyze_output_roles()
-    input_info = model_metadata.find_input_info_layer()
-    input_per_role = {}
-    if input_info and roles:
-        input_per_role[TaskMethodEnum.mask_rcnn.value] = {
-            'image_info_input': input_info or '',
-            'outputs': roles
-        }
+
     model_computational_complexity = ModelComputationalComplexity(model_metadata)
     model_computational_complexity.set_ignore_unknown_layers(cli_args.ignore_unknown_layers)
 
