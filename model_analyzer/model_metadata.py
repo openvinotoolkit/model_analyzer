@@ -23,7 +23,7 @@ from xml.etree import ElementTree
 from openvino.runtime import Node, Model, ConstOutput, Core
 from openvino.runtime.passes import Manager
 
-from model_analyzer.constants import ModelTypes, YoloAnchors, LayoutTypes
+from model_analyzer.constants import ModelTypes, YoloAnchors
 from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
@@ -109,9 +109,9 @@ class ModelMetaData:
     def find_input_info_layer(self) -> str:
         """Return the name of the IMAGE_INFO layer. Instance segmentation only."""
         result = None
-        for index, input_node in enumerate(self.inputs):
-            layout = self._get_layout_for_input(index)
-            if layout == LayoutTypes.C:
+        for input_node in self.inputs:
+            shape = get_shape_for_node_safely(input_node)
+            if len(shape) == 1:
                 result = input_node.friendly_name
                 break
         return result
@@ -119,10 +119,9 @@ class ModelMetaData:
     def analyze_inpainting_inputs(self) -> Dict[str, str]:
         """Return input predictions for image and mask layers. Inpainting only."""
         roles = {}
-        for index, candidate in enumerate(self.input_names):
-            layer = self.model.input(index)
-            shape = self.get_shape_values(layer.layout, layer.input_data.shape)
-            if layer.layout == LayoutTypes.NCHW.value and shape['C'] == 1:
+        for candidate in self.inputs:
+            shape = get_shape_for_node_safely(candidate)
+            if len(shape) == 4 and shape[1] == 1:  # C dimension is 1
                 roles['mask'] = candidate
             else:
                 roles['image'] = candidate
@@ -200,9 +199,9 @@ class ModelMetaData:
     def is_argmax_used(self):
         """Return info on whether the model output is argmaxed. Semantic Segmentation only"""
         output_layer = self.outputs[0]
-        output_shape = self.get_shape_values(output_layer.layout, output_layer.shape)
+        output_shape = get_shape_for_node_safely(output_layer)
 
-        return output_shape['C'] == 1
+        return output_shape[1] == 1
 
     def get_mo_params(self) -> Optional[Dict[str, str]]:
         """Return Model Optimizer CLI parameters from IR metadata, `None` if the node is absent."""
