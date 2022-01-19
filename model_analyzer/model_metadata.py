@@ -13,7 +13,6 @@
       https://software.intel.com/content/dam/develop/external/us/en/documents/intel-openvino-license-agreements.pdf
 """
 import logging
-import re
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
 from xml.etree import ElementTree
@@ -22,7 +21,8 @@ from xml.etree import ElementTree
 from openvino.runtime import Node, Model, ConstOutput
 from openvino.runtime.passes import Manager
 
-from model_analyzer.constants import ModelTypes, YoloAnchors
+from model_analyzer.constants import ModelTypes, YoloAnchors, LayoutTypes
+from model_analyzer.layout_utils import is_batched_image_layout, parse_node_layout, is_image_info_layout
 from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
@@ -105,25 +105,28 @@ class ModelMetaData:
     def layer_types(self) -> List[str]:
         return [layer.get_type_name() for layer in self.ops]
 
-    def find_input_info_layer(self) -> str:
+    def find_input_info_layer(self) -> Optional[str]:
         """Return the name of the IMAGE_INFO layer. Instance segmentation only."""
-        result = None
-        for input_node in self.inputs:
-            shape = get_shape_for_node_safely(input_node)
-            if len(shape) == 2:
-                result = input_node.any_name
-                break
-        return result
+        for model_input in self.inputs:
+            layout_array = parse_node_layout(model_input.node)
+            if is_image_info_layout(layout_array):
+                return model_input.any_name
+        return None
 
     def analyze_inpainting_inputs(self) -> Dict[str, str]:
-        """Return input predictions for image and mask layers. Inpainting only."""
+        """Return input predictions for image and mask layers. InPainting only."""
         roles = {}
-        for candidate in self.inputs:
-            shape = get_shape_for_node_safely(candidate)
-            if len(shape) == 4 and shape[1] == 1:  # C dimension is 1
-                roles['mask'] = candidate
-            else:
-                roles['image'] = candidate
+        for model_input in self.inputs:
+            parameter_node = model_input.node
+            shape = get_shape_for_node_safely(parameter_node)
+            layout = parse_node_layout(parameter_node.layout)
+            if not is_batched_image_layout(layout):
+                continue
+            c_index = layout.index('C')
+            if shape[c_index] == 1:  # C dimension is 1
+                roles['mask'] = model_input.any_name
+            elif shape[c_index] == 3:  # C dimension is 3:
+                roles['image'] = model_input.any_name
 
         return roles
 
@@ -160,28 +163,30 @@ class ModelMetaData:
         for result in self.outputs:
             node = result.node
             result_precision = node.get_output_element_type(0).get_type_name()
-            result_shape = get_shape_for_node_safely(result)
+            layout = parse_node_layout(node)
+
             if result_precision in {'i32', 'i16'}:
                 roles['classes_out'] = result.any_name
                 continue
-            if result_precision in {'f32', 'f16'} and len(result_shape) == 1:  # Layout is C
+            if result_precision in {'f32', 'f16'} and layout == LayoutTypes.C:
                 roles['scores_out'] = result.any_name
                 continue
-            if len(result_shape) == 2:  # Layout is NC
+            if layout == LayoutTypes.NC:
                 roles['boxes_out'] = result.any_name
                 continue
-            if len(result_shape) == 4:  # Layout is NCHW
+            if is_batched_image_layout(layout):  # Layout is NCHW
                 roles['raw_masks_out'] = result.any_name
         return roles
 
     def _get_output_roles_for_instance_segm_from_tf(self):
         roles = {}
         for result in self.outputs:
-            result_shape = get_shape_for_node_safely(result)
-            if len(result_shape) == 2:  # and better add check for layout == NC
+            node = result.node
+            layout = parse_node_layout(node)
+            if layout == LayoutTypes.NC:
                 roles['detection_out'] = result.any_name
                 continue
-            if len(result_shape) == 4:  # and better add check for layout == NCHW
+            if is_batched_image_layout(node.layout):
                 roles['raw_masks_out'] = result.any_name
         return roles
 
@@ -197,10 +202,15 @@ class ModelMetaData:
 
     def is_argmax_used(self):
         """Return info on whether the model output is argmaxed. Semantic Segmentation only"""
-        output_layer = self.outputs[0]
-        output_shape = get_shape_for_node_safely(output_layer)
+        output_node = self.outputs[0]
+        layout = parse_node_layout(output_node)
 
-        return output_shape[1] == 1
+        c_index = layout.index('C')
+        if not c_index:
+            return False
+
+        output_shape = get_shape_for_node_safely(output_node)
+        return output_shape[c_index] == 1
 
     def get_mo_params(self) -> Optional[Dict[str, str]]:
         """Return Model Optimizer CLI parameters from IR metadata, `None` if the node is absent."""
@@ -278,12 +288,6 @@ class ModelMetaData:
             shape = self._get_output_shape(output)
             indicator = len(shape) == 2 and shape[1] == 1001
         return True if indicator else None
-
-    @staticmethod
-    def get_shape_values(layout: List[str], shape: List[int]) -> Dict[str, int]:
-        if len(layout) != len(shape):
-            return {}
-        return {l: d for l, d in zip(layout, shape)}
 
     def _get_anchors(self) -> Optional[List[float]]:
         region_yolo = [output for output in self.outputs if output.node.get_type_name() == 'RegionYolo']
@@ -434,10 +438,6 @@ class ModelMetaData:
                 or 'ExperimentalDetectronROIFeatureExtractor' in xml_layer_types
         )
 
-    def _get_layout_for_input(self, input_index: int) -> List[str]:
-        node = self.model.input(input_index).node
-        return ModelMetaData._parse_layout_to_array(node)
-
     def _is_semantic_segmentation(self) -> bool:
         if len(self.outputs) != 1:
             return False
@@ -452,12 +452,20 @@ class ModelMetaData:
             return False
 
         input_layer = self.inputs[0]
+        input_shape = get_shape_for_node_safely(input_layer)
+        input_layout = parse_node_layout(input_layer.node)
+        if 'H' not in input_layout or 'W' not in input_layout:
+            return False
+
+        input_dim = input_shape[input_layout.index('H')], input_shape[input_layout.index('W')]
 
         output_layer = self.outputs[0]
         output_shape = self._get_output_shape(output_layer)
-        output_dim = list(output_shape)[-2:]
-        input_shape = get_shape_for_node_safely(input_layer)
-        input_dim = list(input_shape)[-2:]
+        output_layout = parse_node_layout(output_layer.node)
+        if 'H' not in output_layout or 'W' not in output_layout:
+            return False
+
+        output_dim = output_shape[output_layout.index('H')], output_shape[output_layout.index('W')]
 
         equal_dims = bool(input_dim == output_dim)
 
@@ -577,19 +585,3 @@ class ModelMetaData:
     @staticmethod
     def _get_output_shape(output: ConstOutput) -> List[int]:
         return get_shape_for_node_safely(output)
-
-    @staticmethod
-    def _parse_layout_to_array(node: Node) -> List[str]:
-        layout_str = str(node.get_layout())
-        layout_match = re.search(r'\[(?P<layout>.*)]', layout_str)
-        if not layout_match:
-            return ['?', ]
-        clear_layout = layout_match.group('layout')
-        if clear_layout == '...':
-            return ModelMetaData._get_fully_undefined_layout(node)
-        return [dim for dim in clear_layout.split(',')]
-
-    @staticmethod
-    def _get_fully_undefined_layout(node: Node) -> List[str]:
-        shape = get_shape_for_node_safely(node)
-        return ['?' for _ in shape]

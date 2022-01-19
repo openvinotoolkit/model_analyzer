@@ -4,6 +4,7 @@ model_analyzer/__init__.py
 model_analyzer/__main__.py
 model_analyzer/constants.py
 model_analyzer/layer_provider.py
+model_analyzer/layout_utils.py
 model_analyzer/model_complexity.py
 model_analyzer/model_metadata.py
 model_analyzer/openvino_core_service.py

@@ -46,4 +46,5 @@ class LayoutTypes(Enum):
     NCHW = ['N', 'C', 'H', 'W']
     NHWC = ['N', 'H', 'W', 'C']
     NC = ['N', 'C']
+    CN = ['C', 'N']
     C = ['C']
