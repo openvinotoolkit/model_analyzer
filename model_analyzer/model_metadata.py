@@ -162,15 +162,15 @@ class ModelMetaData:
             result_precision = node.get_output_element_type(0).get_type_name()
             result_shape = get_shape_for_node_safely(result)
             if result_precision in {'i32', 'i16'}:
-                roles['classes_out'] = result_shape
+                roles['classes_out'] = result.any_name
                 continue
-            elif result_precision in {'fP32', 'fP16'} and len(result_shape) == 1:  # Layout is C
+            if result_precision in {'f32', 'f16'} and len(result_shape) == 1:  # Layout is C
                 roles['scores_out'] = result.any_name
                 continue
             if len(result_shape) == 2:  # Layout is NC
                 roles['boxes_out'] = result.any_name
                 continue
-            if len(result_shape) == 2:  # Layout is NCHW
+            if len(result_shape) == 4:  # Layout is NCHW
                 roles['raw_masks_out'] = result.any_name
         return roles
 
