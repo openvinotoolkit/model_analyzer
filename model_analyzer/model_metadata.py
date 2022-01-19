@@ -19,7 +19,7 @@ from typing import Dict, Optional, Tuple, List
 from xml.etree import ElementTree
 
 # pylint: disable=import-error
-from openvino.runtime import Node, Model, ConstOutput, Core
+from openvino.runtime import Node, Model, ConstOutput
 from openvino.runtime.passes import Manager
 
 from model_analyzer.constants import ModelTypes, YoloAnchors
@@ -546,8 +546,7 @@ class ModelMetaData:
         # pylint: disable=too-many-nested-blocks
         if not self.is_int8():
             return [], []
-        core = Core()
-        compiled_model = core.compile_model(self.model, 'CPU')
+        compiled_model = OPENVINO_CORE_SERVICE.compile_model(self.model, 'CPU')
         runtime_model = compiled_model.get_runtime_model()
         for execution_node in runtime_model.get_ordered_ops():
             rt_info = execution_node.get_rt_info()
