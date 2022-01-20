@@ -14,7 +14,7 @@
 """
 import logging
 from pathlib import Path
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, Tuple, List, Union
 from xml.etree import ElementTree
 
 # pylint: disable=import-error
@@ -171,7 +171,7 @@ class ModelMetaData:
             roles = self._get_output_roles_for_instance_segm_from_tf()
         return roles or None
 
-    def _get_output_roles_for_instance_segm_from_onnx(self):
+    def _get_output_roles_for_instance_segm_from_onnx(self) -> Dict[str, str]:
         roles = {}
         for result in self.outputs:
             node = result.node
@@ -191,7 +191,7 @@ class ModelMetaData:
                 roles['raw_masks_out'] = result.any_name
         return roles
 
-    def _get_output_roles_for_instance_segm_from_tf(self):
+    def _get_output_roles_for_instance_segm_from_tf(self) -> Dict[str, str]:
         roles = {}
         for result in self.outputs:
             node = result.node
@@ -203,10 +203,10 @@ class ModelMetaData:
                 roles['raw_masks_out'] = result.any_name
         return roles
 
-    def get_yolo_v2_params(self) -> dict:
+    def get_yolo_v2_params(self) -> Dict[str, Union[str, int]]:
         """Extract model params from the output layer of the model. YOLOv2/TinyYOLOv2 only."""
         params = {}
-        relevant_attributes = ['classes', 'coords', 'num']
+        relevant_attributes = {'classes', 'coords', 'num'}
         output_attributes = self.outputs[0].node.get_attributes()
         for attribute in relevant_attributes:
             params[attribute] = output_attributes.get(attribute)

@@ -130,19 +130,19 @@ class ModelComputationalComplexity:
 
     def get_minimum_memory_consumption(self) -> int:
         input__layer_providers = list(filter(lambda x: x.name in self._input_names, self._layer_providers))
-        all__layer_providers = list(
+        all_layer_providers = list(
             filter(lambda x: not isinstance(x, Constant), self._layer_providers))
-        is_computed = {layer_provider.name: False for layer_provider in all__layer_providers}
+        is_computed = {layer_provider.name: False for layer_provider in all_layer_providers}
 
         direct_input_children_names = []
         for layer_provider in input__layer_providers:
             direct_input_children_names.extend(layer_provider.get_child_names())
 
         max_memory_size = 0
-        for layer_provider in all__layer_providers:
+        for layer_provider in all_layer_providers:
             current_memory_size = layer_provider.get_output_blobs_total_size()
 
-            for prev_layer_provider in all__layer_providers:
+            for prev_layer_provider in all_layer_providers:
                 if prev_layer_provider.name == layer_provider.name:
                     break
                 memory_not_needed = True
