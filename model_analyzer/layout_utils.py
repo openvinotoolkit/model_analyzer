@@ -21,7 +21,7 @@ from openvino.runtime import Node, Layout
 from model_analyzer.constants import LayoutTypes
 
 
-def is_image_info_layout(layout: Layout) -> bool:
+def is_image_info_layout(layout: List[str]) -> bool:
     return layout in (LayoutTypes.NC, LayoutTypes.CN)
 
 

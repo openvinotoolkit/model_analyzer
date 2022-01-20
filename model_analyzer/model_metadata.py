@@ -121,8 +121,8 @@ class ModelMetaData:
     def find_input_info_layer(self) -> Optional[str]:
         """Return the name of the IMAGE_INFO layer. Instance segmentation only."""
         for model_input in self.inputs:
-            layout_array = parse_node_layout(model_input.node)
-            if is_image_info_layout(layout_array):
+            layout = parse_node_layout(model_input.node)
+            if is_image_info_layout(layout):
                 return model_input.any_name
         return None
 
@@ -199,7 +199,7 @@ class ModelMetaData:
             if layout == LayoutTypes.NC:
                 roles['detection_out'] = result.any_name
                 continue
-            if is_batched_image_layout(node.layout):
+            if is_batched_image_layout(layout):
                 roles['raw_masks_out'] = result.any_name
         return roles
 
