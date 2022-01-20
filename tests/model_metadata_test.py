@@ -41,8 +41,8 @@ def is_obsolete_model_test_params(request) -> Tuple[str, bool]:
 
 def test_is_obsolete(is_obsolete_model_test_params: Tuple[str, bool]):
     model_name, expected = is_obsolete_model_test_params
-    nmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = nmd.is_obsolete()
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.is_obsolete()
     assert result == expected
 
 
@@ -111,8 +111,8 @@ def mo_parameters_test_params(request) -> Tuple[str, Dict[str, str]]:
 
 def test_get_mo_params(mo_parameters_test_params: Tuple[str, Dict[str, str]]):
     model_name, expected = mo_parameters_test_params
-    nmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = nmd.get_mo_params()
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.get_mo_params()
     assert result == expected
 
 
@@ -126,8 +126,8 @@ def has_layer_type_test_params(request) -> Tuple[str, Tuple[str,...], bool]:
 
 def test_has_layer_type(has_layer_type_test_params: Tuple[str, Tuple[str,...], bool]):
     model_name, layer_types, expected = has_layer_type_test_params
-    nmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = nmd.has_layer_of_type(*layer_types)
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.has_layer_of_type(*layer_types)
     assert result == expected
 
 
@@ -140,8 +140,8 @@ def num_classes_test_params(request) -> Tuple[str, int]:
 
 def test_get_num_classes(num_classes_test_params: Tuple[str, int]):
     model_name, expected = num_classes_test_params
-    nmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = nmd.get_num_classes()
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.get_num_classes()
     assert result == expected
 
 
@@ -154,8 +154,8 @@ def background_class_test_params(request) -> Tuple[str, bool]:
 
 def test_has_background_class(background_class_test_params: Tuple[str, Optional[bool]]):
     model_name, expected = background_class_test_params
-    nmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = nmd.has_background_class()
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.has_background_class()
     assert result == expected
 
 
@@ -168,6 +168,6 @@ def is_winograd_test_params(request) -> Tuple[str, bool]:
 
 def test_is_winograd(is_winograd_test_params: Tuple[str, bool]):
     model_name, expected = is_winograd_test_params
-    nmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = nmd.is_winograd()
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.is_winograd()
     assert result == expected
