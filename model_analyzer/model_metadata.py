@@ -18,7 +18,7 @@ from typing import Dict, Optional, Tuple, List
 from xml.etree import ElementTree
 
 # pylint: disable=import-error
-from openvino.runtime import Node, Model, ConstOutput
+from openvino.runtime import ConstOutput, Node, Model, Layout
 from openvino.runtime.passes import Manager
 
 from model_analyzer.constants import ModelTypes, YoloAnchors, LayoutTypes
@@ -42,7 +42,7 @@ class ModelMetaData:
         self._constant_folding()
 
         self._model_file_suffix = model_path.suffix
-        self.xml = None if self.is_onnx else ElementTree.parse(model_path)
+        self.xml = None if self._is_onnx else ElementTree.parse(model_path)
 
         self.input_layers = [model_input.node for model_input in self.model.inputs]
 
@@ -57,8 +57,21 @@ class ModelMetaData:
             logging.error(exception, exc_info=True)
 
     @property
-    def is_onnx(self) -> bool:
+    def _is_onnx(self) -> bool:
         return self._model_file_suffix in ('.onnx', '.prototxt')
+
+    @property
+    def batch(self) -> Optional[int]:
+        for model_input in self.inputs:
+            parameter_node = model_input.node
+            parameter_layout: Layout = parameter_node.layout
+            if parameter_layout.empty:
+                continue
+
+            if parameter_layout.has_name('N'):
+                batch_index = parameter_layout.get_index_by_name('N')
+                return get_shape_for_node_safely(parameter_node)[batch_index]
+        return None
 
     def get_ir_version(self) -> Optional[int]:
         """Return IR version or `None` if the attribute is absent."""
@@ -81,7 +94,7 @@ class ModelMetaData:
         return not bool(self.model)
 
     def get_framework(self) -> str:
-        if self.is_onnx:
+        if self._is_onnx:
             return 'onnx'
         return self.xml.find('./meta_data/cli_parameters/framework').attrib['value']
 
@@ -102,7 +115,7 @@ class ModelMetaData:
         return [model_input.any_name for model_input in self.outputs]
 
     @property
-    def layer_types(self) -> List[str]:
+    def _layer_types(self) -> List[str]:
         return [layer.get_type_name() for layer in self.ops]
 
     def find_input_info_layer(self) -> Optional[str]:
@@ -249,7 +262,7 @@ class ModelMetaData:
         if len(self.outputs) != 1:
             return None
 
-        layer_types = self.layer_types
+        layer_types = self._layer_types
 
         if 'RegionYolo' in layer_types:
             operation = next(filter(lambda operation: operation.get_type_name() == 'RegionYolo', self.ops))
@@ -299,7 +312,7 @@ class ModelMetaData:
         return 'RegionYolo' not in [output.node.get_type_name() for output in self.outputs]
 
     def _is_yolo(self) -> bool:
-        layer_types = set(self.layer_types)
+        layer_types = set(self._layer_types)
         return 'RegionYolo' in layer_types
 
     def _is_yolo_v2(self) -> bool:
@@ -397,7 +410,7 @@ class ModelMetaData:
         if len(self.outputs) != 1:
             return False
 
-        layer_types = set(self.layer_types)
+        layer_types = set(self._layer_types)
         excluded_types = {'PRelu', 'NormalizeL2'}
         valid_layer_types = not layer_types & excluded_types
 
@@ -418,14 +431,14 @@ class ModelMetaData:
         return reduced_shapes and valid_layer_types
 
     def _is_ssd(self) -> bool:
-        layer_types = set(self.layer_types)
+        layer_types = set(self._layer_types)
         return 'ROIPooling' not in layer_types and 'DetectionOutput' in layer_types
 
     def _is_instance_segmentation(self) -> bool:
         if not self.xml:
             return False
 
-        layer_types = set(self.layer_types)
+        layer_types = set(self._layer_types)
         output_types = {output.node.get_type_name() for output in self.outputs}
 
         xml_layers = list(self.xml.getroot().find('layers'))
@@ -446,7 +459,7 @@ class ModelMetaData:
         dilations = {str(layer.get_attributes()['dilations']) for layer in convolutions}
         dilations.discard(None)
 
-        layers_types = self.layer_types
+        layers_types = self._layer_types
 
         if len(self.inputs) > 1:
             return False
@@ -472,13 +485,13 @@ class ModelMetaData:
         return equal_dims and len(dilations) > 1 and 'Elu' not in layers_types
 
     def _is_inpainting(self) -> bool:
-        layers_types = set(self.layer_types)
+        layers_types = set(self._layer_types)
         inputs = self.input_names
 
         return 'Elu' in layers_types and len(inputs) == 2
 
     def _is_style_transfer(self) -> bool:
-        layers_types = set(self.layer_types)
+        layers_types = set(self._layer_types)
 
         return 'MVN' in layers_types
 
@@ -521,7 +534,7 @@ class ModelMetaData:
 
         output_layer = self.outputs[0]
         output_shapes = self._get_output_shape(output_layer)
-        layers_types = set(self.layer_types)
+        layers_types = set(self._layer_types)
 
         return {'PRelu', 'NormalizeL2'} & layers_types and len(output_shapes) == 2
 
@@ -532,7 +545,7 @@ class ModelMetaData:
                 1) Uses PRelu activation functions;
                 2) Single output with NCHW shape, H and W shapes reduced to 1px.
         """
-        layers_types = set(self.layer_types)
+        layers_types = set(self._layer_types)
 
         reduced_dims = False
         if len(self.outputs) == 1:
