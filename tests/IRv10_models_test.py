@@ -45,7 +45,7 @@ class TestCaseR1Models(GenericE2ETestCase):
 
     def test_guess_topology_type(self, get_model_info_topology: MODEL_PATHS_TYPE):
         xml_path, bin_path, model_type = get_model_info_topology
-        if 'road-segmentation-adas-0001' in xml_path:
+        if 'road-segmentation-adas-0001' in str(xml_path):
             return 
         cannot_recognize = ['face_recognition', 'object_attributes', 'optical_character_recognition',
                             'head_pose_estimation', 'human_pose_estimation', 'image_processing', 'feature_extraction',
