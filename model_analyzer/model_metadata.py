@@ -87,11 +87,11 @@ class ModelMetaData:
 
     @property
     def outputs(self) -> List[ConstOutput]:
-        return [model_outputs for model_outputs in self.model.outputs]
+        return self.model.outputs
 
     @property
     def inputs(self) -> List[ConstOutput]:
-        return [model_input for model_input in self.model.inputs]
+        return self.model.inputs
 
     @property
     def input_names(self) -> List[str]:

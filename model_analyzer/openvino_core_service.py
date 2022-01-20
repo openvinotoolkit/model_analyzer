@@ -15,7 +15,7 @@
 from pathlib import Path
 
 # pylint: disable=import-error
-from openvino.runtime import Core, Model
+from openvino.runtime import CompiledModel, Core, Model
 
 
 class SingletonType(type):
@@ -38,7 +38,7 @@ class OpenVINOCoreService(metaclass=SingletonType):
     def read_model(self, model_path: Path, weights_path: Path) -> Model:
         return self.core.read_model(str(model_path), str(weights_path))
 
-    def compile_model(self, model: Model, device: str):
+    def compile_model(self, model: Model, device: str) -> CompiledModel:
         return self.core.compile_model(model, device)
 
 
