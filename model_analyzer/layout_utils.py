@@ -13,7 +13,6 @@
       https://software.intel.com/content/dam/develop/external/us/en/documents/intel-openvino-license-agreements.pdf
 """
 import re
-from enum import Enum
 from typing import List
 
 # pylint: disable=import-error
@@ -23,7 +22,7 @@ from model_analyzer.constants import LayoutTypes
 
 
 def is_image_info_layout(layout: Layout) -> bool:
-    return layout == LayoutTypes.NC or layout == LayoutTypes.CN
+    return layout in (LayoutTypes.NC, LayoutTypes.CN)
 
 
 def is_batched_image_layout(layout: List[str]) -> bool:
