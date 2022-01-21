@@ -2,9 +2,13 @@ LICENSE
 model_analyzer.py
 model_analyzer/__init__.py
 model_analyzer/__main__.py
+model_analyzer/constants.py
 model_analyzer/layer_provider.py
-model_analyzer/network_complexity.py
-model_analyzer/network_metadata.py
+model_analyzer/layout_utils.py
+model_analyzer/model_complexity.py
+model_analyzer/model_metadata.py
+model_analyzer/openvino_core_service.py
+model_analyzer/shape_utils.py
 model_analyzer/uncounted_layers.py
 model_analyzer/value_converter.py
 README.md

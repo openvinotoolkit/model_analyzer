@@ -20,7 +20,10 @@ DIR_PATTERNS_TO_SKIP = [
     '.*__pycache__.*',
     '.*\\.git.*',
     '.*automation.*',
-    'tests'
+    'tests',
+    '.*venv',
+    '.*.pytest_cache',
+    '.*.idea'
 ]
 FILE_PATTERNS_TO_SKIP = [
     '.*_test\\.py$',
@@ -36,6 +39,7 @@ FILES_TO_IGNORE = [
     '.*Dockerfile.*',
     '.*generic_e2e_test_case.py*.'
 ]
+
 FULL_NAME_PATTERNS_TO_SKIP = ['.*tests/.*']
 if platform.system() == 'Windows':
     FULL_NAME_PATTERNS_TO_SKIP = [i.replace('/', '\\\\') for i in FULL_NAME_PATTERNS_TO_SKIP]

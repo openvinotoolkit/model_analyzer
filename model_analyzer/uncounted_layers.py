@@ -19,7 +19,7 @@ from typing import Tuple, Dict
 
 import numpy as np
 # pylint: disable=no-name-in-module,import-error
-from ngraph.impl import Node
+from openvino.runtime import Node
 
 from model_analyzer.layer_provider import LayerTypesManager, LayerType
 
@@ -182,20 +182,13 @@ class FakeQuantize(LayerType):
         return None
 
     def get_quantized_params(self) -> Tuple[int, int]:
-        if isinstance(self.layer, Node):
-            source_input = self.layer.input(0).get_source_output().get_node()
-            if source_input.get_type_name() == 'Convert':
-                source_input = source_input.input(0).get_source_output().get_node()
-            if source_input.get_type_name() != 'Constant':
-                return 0, 0
-            data_input = LayerTypesManager.provider(source_input).get_data()
-        else:
-            source_input = self.layer.in_data[0].creator_layer
-            if source_input.type == 'Convert':
-                source_input = source_input.in_data[0].creator_layer
-            if source_input.type != 'Const':
-                return 0, 0
-            data_input = LayerTypesManager.provider(source_input).get_data().reshape(source_input.out_data[0].shape)
+        source_input = self.layer.input(0).get_source_output().get_node()
+        if source_input.get_type_name() == 'Convert':
+            source_input = source_input.input(0).get_source_output().get_node()
+        if source_input.get_type_name() != 'Constant':
+            return 0, 0
+        data_input = LayerTypesManager.provider(source_input).get_data()
+
         shape = data_input.shape
         input_low = np.broadcast_to(self.input_low, shape)
         input_high = np.broadcast_to(self.input_high, shape)

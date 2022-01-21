@@ -3,11 +3,11 @@
     "name": "anti-spoof-mn3",
     "model_path": "public/anti-spoof-mn3/anti-spoof-mn3.onnx",
     "analysis_report": {
-      "GFLOPs": 0.1478,
+      "GFLOPs": 0.1479,
       "GIOPs": 0,
-      "MParams": 3.0566,
+      "MParams": 3.1533,
       "MinMem": 0.5243,
-      "MaxMem": 6.059
+      "MaxMem": 6.1561
     }
   },
   {

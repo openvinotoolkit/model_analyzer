@@ -17,24 +17,19 @@ from typing import Optional, Tuple, Dict
 
 import pytest
 import os
-from openvino.inference_engine import IECore
 
-from model_analyzer.network_metadata import NetworkMetaData
+from model_analyzer.model_metadata import ModelMetaData
 from tests.utils import load_test_config
 
 _, CONFIG_DATA = load_test_config('IRv10_models.json')
 
 
-def get_network_and_xml_path(model_name: str):
+def get_xml_and_bin_path(model_name: str) -> Tuple[Path, Path]:
     model_dir = Path(os.environ['MODELS_PATH'])
     model_data = next(filter(lambda model_info: model_info['name'] == model_name, CONFIG_DATA))
     model_xml_path = model_dir / model_data['xml_path']
     model_bin_path = model_dir / model_data['bin_path']
-    ie_core = IECore()
-    return ie_core.read_network(
-        str(model_xml_path),
-        weights=str(model_bin_path)
-    ), model_xml_path
+    return model_xml_path, model_bin_path
 
 
 @pytest.fixture(params=[
@@ -45,9 +40,9 @@ def is_obsolete_model_test_params(request) -> Tuple[str, bool]:
 
 
 def test_is_obsolete(is_obsolete_model_test_params: Tuple[str, bool]):
-    model, expected = is_obsolete_model_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
-    result = nmd.is_obsolete()
+    model_name, expected = is_obsolete_model_test_params
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.is_obsolete()
     assert result == expected
 
 
@@ -60,7 +55,7 @@ def model_version_test_params(request) -> Tuple[str, int]:
 
 def test_get_ir_version(model_version_test_params: Tuple[str, int]):
     model, expected = model_version_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
+    nmd = ModelMetaData(*get_xml_and_bin_path(model))
     result = nmd.get_ir_version()
     assert result == expected
 
@@ -115,9 +110,9 @@ def mo_parameters_test_params(request) -> Tuple[str, Dict[str, str]]:
 
 
 def test_get_mo_params(mo_parameters_test_params: Tuple[str, Dict[str, str]]):
-    model, expected = mo_parameters_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
-    result = nmd.get_mo_params()
+    model_name, expected = mo_parameters_test_params
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.get_mo_params()
     assert result == expected
 
 
@@ -130,9 +125,9 @@ def has_layer_type_test_params(request) -> Tuple[str, Tuple[str,...], bool]:
 
 
 def test_has_layer_type(has_layer_type_test_params: Tuple[str, Tuple[str,...], bool]):
-    model, layer_types, expected = has_layer_type_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
-    result = nmd.has_layer_of_type(*layer_types)
+    model_name, layer_types, expected = has_layer_type_test_params
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.has_layer_of_type(*layer_types)
     assert result == expected
 
 
@@ -144,9 +139,9 @@ def num_classes_test_params(request) -> Tuple[str, int]:
 
 
 def test_get_num_classes(num_classes_test_params: Tuple[str, int]):
-    model, expected = num_classes_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
-    result = nmd.get_num_classes()
+    model_name, expected = num_classes_test_params
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.get_num_classes()
     assert result == expected
 
 
@@ -158,9 +153,9 @@ def background_class_test_params(request) -> Tuple[str, bool]:
 
 
 def test_has_background_class(background_class_test_params: Tuple[str, Optional[bool]]):
-    model, expected = background_class_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
-    result = nmd.has_background_class()
+    model_name, expected = background_class_test_params
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.has_background_class()
     assert result == expected
 
 
@@ -172,7 +167,7 @@ def is_winograd_test_params(request) -> Tuple[str, bool]:
 
 
 def test_is_winograd(is_winograd_test_params: Tuple[str, bool]):
-    model, expected = is_winograd_test_params
-    nmd = NetworkMetaData(*get_network_and_xml_path(model))
-    result = nmd.is_winograd()
+    model_name, expected = is_winograd_test_params
+    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
+    result = mmd.is_winograd()
     assert result == expected
