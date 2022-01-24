@@ -29,6 +29,7 @@ MODEL_PATHS_TYPE = Tuple[str, str, str]
 
 class GenericE2ETestCase:
     data_dir = MODELS_PATH
+    artifacts_dir = None
 
     def get_model_paths(self, xml_path: Path, bin_path: Path) -> tuple:
         xml_path = self.data_dir / xml_path
@@ -82,4 +83,4 @@ class GenericE2ETestCase:
     @staticmethod
     def compare_float_dictionaries(actual, expected):
         for key, value in expected.items():
-            assert math.isclose(value, actual[key], rel_tol=1e-02), f"Expected {key} value {value}, received {key}"
+            assert math.isclose(value, actual[key], rel_tol=1e-02), f'Expected {key} value {value}, received {actual[key]}'

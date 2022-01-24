@@ -24,6 +24,7 @@ ARTIFACTS_DIR, DATA = load_test_config('onnx_models.json')
 
 class TestOnnxModelsCase(GenericE2ETestCase):
     VERSION = 'onnx'
+
     @classmethod
     def setup_class(cls):
         cls.artifacts_dir = Path(ARTIFACTS_DIR)

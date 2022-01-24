@@ -12,15 +12,17 @@
  You may obtain a copy of the License at
       https://software.intel.com/content/dam/develop/external/us/en/documents/intel-openvino-license-agreements.pdf
 """
-import logging
 import operator
 import struct
 from functools import reduce
-from typing import List, Type, Tuple, Dict
+from typing import List, Type, Tuple, Dict, Iterable
 
 import numpy as np
-# pylint: disable=no-name-in-module,import-error
-from ngraph.impl import Node
+
+# pylint: disable=import-error
+from openvino.runtime import Node
+
+from model_analyzer.shape_utils import get_shape_for_node_safely
 
 
 def _get_param_values(params: dict, multiple_form: str, single_form: str) -> list:
@@ -71,68 +73,51 @@ class LayerType(metaclass=MetaClass):
 
     @property
     def params(self) -> dict:
-        return self.layer.get_attributes() if isinstance(self.layer, Node) else self.layer.params
+        return self.layer.get_attributes()
 
     @property
-    def name(self) -> dict:
-        return self.layer.get_friendly_name() if isinstance(self.layer, Node) else self.layer.name
+    def name(self) -> str:
+        return self.layer.get_friendly_name()
 
     @property
-    def type(self) -> dict:
-        return self.layer.get_type_name() if isinstance(self.layer, Node) else self.layer.type
+    def type(self) -> str:
+        return self.layer.get_type_name()
 
     @property
-    def precision(self) -> dict:
-        return self.layer.get_element_type().get_type_name() if isinstance(self.layer, Node) else self.layer.precision
+    def precision(self) -> str:
+        return self.layer.get_element_type().get_type_name()
 
-    def get_child_names(self) -> list:
-        if isinstance(self.layer, Node):
-            children = []
-            for output in self.layer.outputs():
-                children = [i.get_node().get_friendly_name() for i in output.get_target_inputs()]
-            return children
-        return self.layer.children
+    def get_child_names(self) -> List[str]:
+        children = []
+        for output in self.layer.outputs():
+            children = [i.get_node().get_friendly_name() for i in output.get_target_inputs()]
+        return children
 
     @staticmethod
     def get_blob_size(shape: List[int]) -> int:
         return reduce(operator.mul, shape, 1)
 
     def get_outputs_number(self) -> int:
-        return len(self.layer.outputs()) if isinstance(self.layer, Node) else len(self.layer.out_data)
+        return len(self.layer.outputs())
 
     def get_output_precision(self, index: int) -> int:
-        if isinstance(self.layer, Node):
-            return self.layer.outputs()[index].get_element_type().get_type_name()
-        return self.layer.out_data[index].precision
+        return self.layer.outputs()[index].get_element_type().get_type_name()
 
     def get_output_shape(self, index: int) -> list:
-        if isinstance(self.layer, Node):
-            partial_shape = self.layer.output(index).get_partial_shape()
-            if partial_shape.is_dynamic:
-                logging.warning('%s layer of type %s has dynamic output shape.', self.name, self.type)
-                return []
-            return list(partial_shape.to_shape())
-        return self.layer.out_data[index].shape
+        output = self.layer.output(index)
+        return get_shape_for_node_safely(output)
 
     def get_output_blobs_total_size(self) -> int:
         return sum(self.get_blob_size(self.get_output_shape(i)) for i in range(self.get_outputs_number()))
 
     def get_inputs_number(self) -> int:
-        return len(self.layer.inputs()) if isinstance(self.layer, Node) else len(self.layer.in_data)
+        return len(self.layer.inputs())
 
     def get_input_precision(self, index: int) -> int:
-        if isinstance(self.layer, Node):
-            return self.layer.inputs()[index].get_element_type().get_type_name()
-        return self.layer.in_data[index].precision
+        return self.layer.inputs()[index].get_element_type().get_type_name()
 
     def get_input_shape(self, index: int) -> list:
-        if isinstance(self.layer, Node):
-            partial_shape = self.layer.input(index).get_partial_shape()
-            if partial_shape.is_dynamic:
-                logging.warning('%s layer of type %s has dynamic input shape.', self.name, self.type)
-                return []
-            return list(partial_shape.to_shape())
-        return self.layer.in_data[index].shape
+        return get_shape_for_node_safely(self.layer.input(index))
 
     def get_input_blobs_total_size(self) -> int:
         return sum(self.get_blob_size(self.get_input_shape(i)) for i in range(self.get_inputs_number()))
@@ -149,49 +134,30 @@ class LayerType(metaclass=MetaClass):
         input_channel = input_data.shape[channels_index]
         return input_channel
 
-    def _get_params(self, indexes: list) -> Dict[str, Tuple[int, int]]:
+    def _get_params(self, indexes: Iterable[int]) -> Dict[str, Tuple[int, int]]:
         result = {}
-        if isinstance(self.layer, Node):
-            for i in indexes:
-                source_node = self.layer.input(i).get_source_output().get_node()
-                if source_node.get_type_name() == 'FakeQuantize':
-                    fq_provider = LayerTypesManager.provider(source_node)
-                    result[source_node.get_friendly_name()] = fq_provider.get_quantized_params()
-                else:
-                    if source_node.get_type_name() in ['Reshape', 'Convert']:
-                        source_node = source_node.input(0).get_source_output().get_node()
-                    if source_node.get_type_name() == 'Constant':
-                        blob = LayerTypesManager.provider(source_node).get_data()
-                        result[source_node.get_friendly_name()] = \
-                            float(reduce(operator.mul, self.get_input_shape(i), 1)), (blob == 0).sum()
-        else:
-            def add_params(source_node):
-                nonlocal result
-                for blob in source_node.blobs.values():
-                    if blob is not None:
-                        blob = LayerType.unpack(blob)
-                        # pylint: disable=singleton-comparison
-                        result[source_node.name] = blob.size, (blob[np.where(np.isnan(blob) == False)] == 0).sum()
-
-            if self.layer.blobs:
-                add_params(self.layer)
+        for i in indexes:
+            source_node = self.layer.input(i).get_source_output().get_node()
+            if source_node.get_type_name() == 'FakeQuantize':
+                fq_provider = LayerTypesManager.provider(source_node)
+                result[source_node.get_friendly_name()] = fq_provider.get_quantized_params()
             else:
-                for i in indexes:
-                    parent = self.layer.in_data[i].creator_layer
-                    if parent.type == 'FakeQuantize':
-                        fq_provider = LayerTypesManager.provider(parent)
-                        result[parent.name] = fq_provider.get_quantized_params()
-                    if parent.type == 'Const':
-                        add_params(parent)
+                if source_node.get_type_name() in {'Reshape', 'Convert'}:
+                    source_node = source_node.input(0).get_source_output().get_node()
+                if source_node.get_type_name() == 'Constant':
+                    blob = LayerTypesManager.provider(source_node).get_data()
+                    result[source_node.get_friendly_name()] = (
+                        float(reduce(operator.mul, self.get_input_shape(i), 1)),
+                        (blob == 0).sum()
+                    )
         return result
 
     def get_params(self) -> Dict[str, Tuple[int, int]]:
-        indexes = range(len(self.layer.inputs())) if isinstance(self.layer, Node) else range(len(self.layer.in_data))
+        indexes = range(len(self.layer.inputs()))
         return self._get_params(indexes)
 
     @staticmethod
     def unpack(data):
-
         # skip big blobs unpack due to OOM error
         if data.nbytes > 500 * 1024 * 1024:
             return data
@@ -263,20 +229,16 @@ class Convolution(LayerType):
     layer_types = ['Convolution', 'GroupConvolution', 'DeformableConvolution']
 
     def get_ops_per_element(self) -> float:
-        if isinstance(self.layer, Node):
-            input_shape = self.get_input_shape(0)
-            filter_shape = self.get_input_shape(1)
-            input_channel = input_shape[1]
-            if self.layer.get_type_name() == 'GroupConvolution':
-                group = filter_shape[0]
-                kernel_spatial_size = reduce(operator.mul, list(filter_shape)[3:], 1)
-            else:
-                group = 1
-                kernel_spatial_size = reduce(operator.mul, list(filter_shape)[2:], 1)
+        input_shape = self.get_input_shape(0)
+        filter_shape = self.get_input_shape(1)
+        input_channel = input_shape[1]
+        if self.layer.get_type_name() == 'GroupConvolution':
+            group = filter_shape[0]
+            kernel_spatial_size = reduce(operator.mul, list(filter_shape)[3:], 1)
         else:
-            input_channel = self.get_input_channel()
-            kernel_spatial_size = reduce(operator.mul, _get_param_values(self.params, 'kernel', 'kernel'), 1)
-            group = int(self.params.get('group', 1))
+            group = 1
+            kernel_spatial_size = reduce(operator.mul, list(filter_shape)[2:], 1)
+
         # (mul + add) x ROI size
         flops_per_element = (self.mul + self.add) * (input_channel / group) * kernel_spatial_size
         return flops_per_element
@@ -373,24 +335,16 @@ class Deconvolution(LayerType):
     layer_types = ['Deconvolution', 'ConvolutionBackPropData', 'GroupConvolutionBackpropData']
 
     def get_ops_per_element(self) -> float:
-        kernel_spatial_size = None
-        stride_spatial_size = None
-        input_channel = None
-        group = None
-        if isinstance(self.layer, Node):
-            input_shape = self.get_input_shape(0)
-            filter_shape = self.get_input_shape(1)
-            input_channel = input_shape[1]
-            if self.layer.get_type_name() == 'GroupConvolutionBackpropData':
-                group = filter_shape[0]
-                kernel_spatial_size = reduce(operator.mul, list(filter_shape)[3:], 1)
-            else:
-                group = 1
-                kernel_spatial_size = reduce(operator.mul, list(filter_shape)[2:], 1)
+
+        input_shape = self.get_input_shape(0)
+        filter_shape = self.get_input_shape(1)
+        input_channel = input_shape[1]
+        if self.layer.get_type_name() == 'GroupConvolutionBackpropData':
+            group = filter_shape[0]
+            kernel_spatial_size = reduce(operator.mul, list(filter_shape)[3:], 1)
         else:
-            input_channel = self.get_input_channel()
-            kernel_spatial_size = reduce(operator.mul, _get_param_values(self.params, 'kernel', 'kernel'), 1)
-            group = int(self.params.get('group', 1))
+            group = 1
+            kernel_spatial_size = reduce(operator.mul, list(filter_shape)[2:], 1)
         stride_spatial_size = reduce(operator.mul, _get_param_values(self.params, 'strides', 'stride'), 1)
         flops_per_element = (self.mul + self.add) * (input_channel / group) * kernel_spatial_size / stride_spatial_size
         return flops_per_element
@@ -502,19 +456,16 @@ class Power(LayerType):
     layer_types = ['Power']
 
     def get_ops_per_element(self) -> float:
-        if isinstance(self.layer, Node):
-            power_op = self.layer.input(1).get_source_output().get_node()
-            if power_op.get_type_name() == 'Constant':
-                provider = LayerTypesManager.provider(power_op)
-                if provider.get_output_blobs_total_size == 1:
-                    power = float(provider.get_data())
-                else:
-                    # Different number of ops per element
-                    raise NotImplementedError
+        power_op = self.layer.input(1).get_source_output().get_node()
+        if power_op.get_type_name() == 'Constant':
+            provider = LayerTypesManager.provider(power_op)
+            if provider.get_output_blobs_total_size == 1:
+                power = float(provider.get_data())
             else:
+                # Different number of ops per element
                 raise NotImplementedError
         else:
-            power = float(self.params['power'])
+            raise NotImplementedError
         flops_per_element = self.mul + self.add + (power - 1) * self.mul
         return flops_per_element
 
@@ -530,12 +481,8 @@ class PsRoiPooling(LayerType):
     layer_types = ['PSROIPooling']
 
     def get_ops_per_element(self) -> int:
-        if isinstance(self.layer, Node):
-            in_dims = list(self.layer.inputs()[0].get_shape())
-            out_dims = list(self.layer.outputs()[0].get_shape())
-        else:
-            in_dims = self.layer.in_data[0].shape
-            out_dims = self.layer.out_data[0].shape
+        in_dims = list(self.layer.inputs()[0].get_shape())
+        out_dims = list(self.layer.outputs()[0].get_shape())
         # real kernel sizes are read from input, so approximation is used
         size = 3 if len(in_dims) == 5 else 2
         kernel_spatial_size = 1
@@ -608,10 +555,7 @@ class Gemm(LayerType):
     layer_types = ['GEMM', 'MatMul']
 
     def get_ops_per_element(self) -> int:
-        if isinstance(self.layer, Node):
-            in_dims = list(self.layer.inputs()[0].get_shape())
-        else:
-            in_dims = self.layer.in_data[0].shape
+        in_dims = list(self.layer.inputs()[0].get_shape())
         flops_per_element = 2 * in_dims[-1]
         return flops_per_element
 
@@ -704,10 +648,7 @@ class Constant(NonMathLayer):
         return None
 
     def get_data(self):
-        if isinstance(self.layer, Node):
-            data = self.layer.get_data()
-        else:
-            data = self.layer.blobs['custom']
+        data = self.layer.get_data()
         return LayerType.unpack(data)
 
 
