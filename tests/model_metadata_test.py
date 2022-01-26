@@ -157,17 +157,3 @@ def test_has_background_class(background_class_test_params: Tuple[str, Optional[
     mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
     result = mmd.has_background_class()
     assert result == expected
-
-
-@pytest.fixture(params=[
-    ('yolo-v2-ava-0001', False)
-])
-def is_winograd_test_params(request) -> Tuple[str, bool]:
-    return request.param
-
-
-def test_is_winograd(is_winograd_test_params: Tuple[str, bool]):
-    model_name, expected = is_winograd_test_params
-    mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = mmd.is_winograd()
-    assert result == expected

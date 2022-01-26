@@ -248,15 +248,6 @@ class ModelMetaData:
         """Return True if the model was Int8 quantized."""
         return self.has_layer_of_type('FakeQuantize')
 
-    def is_winograd(self) -> bool:
-        """Return True if the model was adapted for Winograd algorithm."""
-
-        for layer in self.ops:
-            if layer.get_type_name() == 'Convolution' and 'PrimitivesPriority' in layer.rt_info and \
-                    'cpu:jit_avx512_winograd' in layer.rt_info['PrimitivesPriority'].get():
-                return True
-        return False
-
     def get_num_classes(self) -> Optional[int]:
         """Return number of classes the IR supports, if possible."""
         if len(self.outputs) != 1:
