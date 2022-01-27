@@ -226,22 +226,45 @@ class LayerType(metaclass=MetaClass):
 
 
 class Convolution(LayerType):
-    layer_types = ['Convolution', 'GroupConvolution', 'DeformableConvolution']
+    layer_types = ['Convolution']
+
+    @property
+    def filter_shape(self) -> List[int]:
+        return self.get_input_shape(1)
+
+    @property
+    def group(self) -> int:
+        return 1
+
+    @property
+    def kernel_spatial_size(self) -> int:
+        return reduce(operator.mul, list(self.filter_shape)[2:], 1)
 
     def get_ops_per_element(self) -> float:
         input_shape = self.get_input_shape(0)
-        filter_shape = self.get_input_shape(1)
         input_channel = input_shape[1]
-        if self.layer.get_type_name() == 'GroupConvolution':
-            group = filter_shape[0]
-            kernel_spatial_size = reduce(operator.mul, list(filter_shape)[3:], 1)
-        else:
-            group = 1
-            kernel_spatial_size = reduce(operator.mul, list(filter_shape)[2:], 1)
 
         # (mul + add) x ROI size
-        flops_per_element = (self.mul + self.add) * (input_channel / group) * kernel_spatial_size
+        flops_per_element = (self.mul + self.add) * (input_channel / self.group) * self.kernel_spatial_size
         return flops_per_element
+
+
+class DeformableConvolution(Convolution):
+    layer_types = ['DeformableConvolution']
+
+    @property
+    def filter_shape(self) -> List[int]:
+        return self.get_input_shape(2)
+
+
+class GroupConvolution(Convolution):
+    @property
+    def group(self) -> int:
+        return self.filter_shape[0]
+
+    @property
+    def kernel_spatial_size(self) -> int:
+        return reduce(operator.mul, list(self.filter_shape)[3:], 1)
 
 
 class Acosh(LayerType):
