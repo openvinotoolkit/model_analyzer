@@ -258,6 +258,8 @@ class DeformableConvolution(Convolution):
 
 
 class GroupConvolution(Convolution):
+    layer_types = ['GroupConvolution']
+  
     @property
     def group(self) -> int:
         return self.filter_shape[0]
