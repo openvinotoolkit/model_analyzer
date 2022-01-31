@@ -1,8 +1,10 @@
 ### Instruction for launching tests of Model Analyzer on Ubuntu
 
+> NOTE: The Model Analyzer branches are synced with branches in the [OpenVINO](https://github.com/openvinotoolkit/openvino) repositories
+
 > NOTE: It is recommended to use Python virtual environment to work with the repository
 
-1. [Install OpenVINO package](https://docs.openvinotoolkit.org/latest/openvino_docs_install_guides_installing_openvino_linux.html) 
+1. [Install OpenVINO package](https://docs.openvino.ai/latest/openvino_docs_install_guides_installing_openvino_linux.html) 
 
 2. **OPTIONAL** Create and activate Python virtual environment:
 ```shell
