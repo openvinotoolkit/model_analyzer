@@ -39,42 +39,42 @@ def parse_arguments():
                              'with --model option',
                         type=Path)
 
-    parser.add_argument('-o', '--report-dir',
+    parser.add_argument('-o', '--report_dir', '--report-dir',
                         help='Output directory',
                         type=Path,
                         default=Path.cwd())
 
-    parser.add_argument('--model-report',
+    parser.add_argument('--model_report', '--model-report',
                         help='Name for the file where theoretical analysis results are stored',
                         type=str,
                         default='model_report.csv')
 
-    parser.add_argument('--per-layer-mode',
+    parser.add_argument('--per_layer_mode', '--per-layer-mode',
                         help='Enables collecting per-layer complexity metrics',
                         action='store_true',
                         default=False)
 
-    parser.add_argument('--per-layer-report',
+    parser.add_argument('--per_layer_report', '--per-layer-report',
                         help='File name for the per-layer complexity metrics. '
                              'Should be specified only when --per-layer-mode option' +
                              ' is used',
                         default='per_layer_report.csv')
 
-    parser.add_argument('--sparsity-ignored-layers',
+    parser.add_argument('--sparsity_ignored_layers', '--sparsity-ignored-layers',
                         help='Specifies ignored layers names separated by comma',
                         default='')
 
-    parser.add_argument('--sparsity-ignore-first-conv',
+    parser.add_argument('--sparsity_ignore_first_conv', '--sparsity-ignore-first-conv',
                         help='Ignores first Convolution layer for sparsity computation',
                         action='store_true',
                         default=False)
 
-    parser.add_argument('--sparsity-ignore-fc',
+    parser.add_argument('--sparsity_ignore_fc', '--sparsity-ignore-fc',
                         help='Ignores FullyConnected layers for sparsity computation',
                         action='store_true',
                         default=False)
 
-    parser.add_argument('--ignore-unknown-layers',
+    parser.add_argument('--ignore_unknown_layers', '--ignore-unknown-layers',
                         help='Ignores unknown types of layers when counting GFLOPs',
                         action='store_true',
                         default=False)
