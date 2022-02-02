@@ -34,8 +34,8 @@ def parse_arguments():
                         type=Path)
 
     parser.add_argument('-w', '--weights',
-                        help='Path to the .bin file of the Intermediate Representation (IR) model. If not specified'
-                             'it is expected that the weights file name is the same as the .xml file passed'
+                        help='Path to the .bin file of the Intermediate Representation (IR) model. If not specified,'
+                             'the weights file name expected to be the same as the .xml file passed'
                              'with --model option',
                         type=Path)
 

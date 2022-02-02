@@ -291,7 +291,7 @@ def export_network_into_csv(g_flops, g_iops, total_params, sparsity, min_mem_con
                 f'{max_mem_consumption:.4f}', f'{sparsity:.4f}', net_precisions, guessed_type
             ]
         )
-    log.info('Network status information file name: %s', file_name)
+    log.info('File name with network status information : %s', file_name)
 
 
 def get_layer_params(layer_provider: LayerType) -> str:

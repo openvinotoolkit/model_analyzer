@@ -174,7 +174,7 @@ Warning, GOPS for layer(s) wasn't counted - ReduceMean
 [ INFO ] Sparsity: 0.0001
 [ INFO ] Minimum memory consumption: 2.4084
 [ INFO ] Maximum memory consumption: 26.8328
-[ INFO ] Guessed type: classificator
+[ INFO ] Guessed type: classification
 [ INFO ] Network status information file name: /home/user/model_analyzer/model_report.csv
 ```
 
@@ -183,7 +183,7 @@ Find the instructions for contributors in the [DEVELOPER.md](https://github.com/
 ## ⚠️ Limitations
 
 1. Note that Model Analyzer provides approximate theoretical information, as some of the layers may be ignored due to the model structure.
-2. At the analysis stage, Model Analyzer can detect layers for which no information is available. Use `--ignore-unknown-layers` option to avoid any errors. Feel free to submit your suggestions on how to analyze these layers. 
+2. At the analysis stage, Model Analyzer can detect layers for which no information is available. Use `--ignore-unknown-layers` option to avoid errors. Feel free to submit your suggestions on how to analyze these layers. 
 
 <details>
 <summary>List of Ignored Layers</summary>

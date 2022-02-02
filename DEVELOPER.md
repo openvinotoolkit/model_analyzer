@@ -32,7 +32,7 @@ python tests/download_models.py --config tests/data/onnx_models.json
 ```shell
 export MODELS_PATH=tests/data/models
 ```
-6. Run the tests
+6. Run the tests:
 ```shell
 pytest --disable-warnings -r A
 ```
