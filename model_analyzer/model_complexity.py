@@ -213,7 +213,7 @@ class ModelComputationalComplexity:
                     '{:.4f}'.format(float(cur_layer['g_flops'])),
                     '{:.4f}'.format(float(cur_layer['g_iops'])),
                     '{:.4f}'.format(float(cur_layer['m_params'])),
-                    cur_layer['layer_params'] if 'layer_params' in cur_layer.keys() else None,
+                    cur_layer.get('layer_params'),
                     cur_layer['input_blob'],
                     cur_layer['output_blob'],
                 ])
