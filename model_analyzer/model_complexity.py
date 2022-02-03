@@ -195,7 +195,8 @@ class ModelComputationalComplexity:
         with open(file_name, mode='w') as info_file:
             info_writer = csv.writer(info_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             info_writer.writerow(
-                ['LayerType', 'LayerName', 'MParams'])
+                ['LayerType', 'LayerName', 'GFLOPs', 'GIOPs', 'MParams', 'LayerParams', 'InputBlobs', 'OutputBlobs']
+            )
             layers_ids = self._model_metadata.get_layers_ids()
             try:
                 sorted_layers = sorted(self._computational_complexity.keys(), key=lambda x: layers_ids[x])
@@ -209,12 +210,12 @@ class ModelComputationalComplexity:
                 info_writer.writerow([
                     cur_layer['layer_type'],
                     cur_layer['layer_name'],
-                    # '{:.4f}'.format(float(cur_layer['g_flops'])),
-                    # '{:.4f}'.format(float(cur_layer['g_iops'])),
+                    '{:.4f}'.format(float(cur_layer['g_flops'])),
+                    '{:.4f}'.format(float(cur_layer['g_iops'])),
                     '{:.4f}'.format(float(cur_layer['m_params'])),
-                    # cur_layer['layer_params'] if 'layer_params' in cur_layer.keys() else None,
-                    # cur_layer['input_blob'],
-                    # cur_layer['output_blob'],
+                    cur_layer.get('layer_params'),
+                    cur_layer['input_blob'],
+                    cur_layer['output_blob'],
                 ])
         log.info('Complexity file name: %s', file_name)
 
