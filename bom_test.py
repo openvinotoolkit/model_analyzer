@@ -54,7 +54,7 @@ class TestBOMFile:
 
         # pylint:disable=W1401
         cls.expected_header = [re.compile(pattern) for pattern in [
-            '^# Copyright (C) 2019-2022 Intel Corporation$',
+            '^# Copyright \(C\) 2019-202\d Intel Corporation$',
             '^# SPDX-License-Identifier: Apache-2.0$'
         ]]
 
