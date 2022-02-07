@@ -26,7 +26,7 @@ def get_shape_for_node_safely(io_node: Union[Input, Output]) -> List[int]:
 
         try:
             node_name = io_node.any_name
-        except RuntimeError:
+        except (RuntimeError, AttributeError):
             node_name = ''
         logging.warning(
             '%s layer of type %s has dynamic output shape.',
