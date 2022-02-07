@@ -132,7 +132,7 @@ class ModelMetaData:
         for model_input in self.inputs:
             parameter_node = model_input.node
             shape = get_shape_for_node_safely(parameter_node)
-            layout = parse_node_layout(parameter_node.layout)
+            layout = parse_node_layout(parameter_node)
             if not is_batched_image_layout(layout):
                 continue
             c_index = layout.index('C')
