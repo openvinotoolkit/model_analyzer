@@ -38,7 +38,8 @@ def is_image_layout(layout: List[str]) -> bool:
 
 
 def get_fully_undefined_node_layout(node: Node) -> List[str]:
-    return ['?'] * len(node.shape)
+    partial_shape = node.get_output_partial_shape(0)
+    return ['?'] * len(partial_shape.rank)
 
 
 def parse_node_layout(node: Node) -> List[str]:
