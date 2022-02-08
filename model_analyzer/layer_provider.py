@@ -569,7 +569,8 @@ class Gemm(LayerType):
     layer_types = ['GEMM', 'MatMul']
 
     def get_ops_per_element(self) -> int:
-        in_dims = list(self.layer.inputs()[0].get_shape())
+        first_input = self.layer.inputs()[0]
+        in_dims = get_shape_for_node_safely(first_input)
         flops_per_element = 2 * in_dims[-1]
         return flops_per_element
 
