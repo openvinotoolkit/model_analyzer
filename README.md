@@ -174,7 +174,7 @@ Warning, GOPS for layer(s) wasn't counted - ReduceMean
 [ INFO ] Sparsity: 0.0001
 [ INFO ] Minimum memory consumption: 2.4084
 [ INFO ] Maximum memory consumption: 26.8328
-[ INFO ] Guessed type: classification
+[ INFO ] Guessed type: classificator
 [ INFO ] Network status information file name: /home/user/model_analyzer/model_report.csv
 ```
 
