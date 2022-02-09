@@ -1,17 +1,6 @@
-"""
- Model Analyzer
+# Copyright (C) 2019-2022 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
 
- Copyright (c) 2021 Intel Corporation
-
- LEGAL NOTICE: Your use of this software and any required dependent software (the “Software Package”) is subject to
- the terms and conditions of the software license agreements for Software Package, which may also include
- notices, disclaimers, or license terms for third party or open source software
- included in or with the Software Package, and your use indicates your acceptance of all such terms.
- Please refer to the “third-party-programs.txt” or other similarly-named text file included with the Software Package
- for additional details.
- You may obtain a copy of the License at
-      https://software.intel.com/content/dam/develop/external/us/en/documents/intel-openvino-license-agreements.pdf
-"""
 import logging
 from typing import List, Union
 
@@ -23,7 +12,16 @@ def get_shape_for_node_safely(io_node: Union[Input, Output]) -> List[int]:
     partial_shape = io_node.get_partial_shape()
     if partial_shape.is_dynamic:
         node = io_node.get_node()
-        logging.warning('%s layer of type %s has dynamic output shape.', io_node.any_name, node.get_type_name())
+
+        try:
+            node_name = io_node.any_name
+        except (RuntimeError, AttributeError):
+            node_name = ''
+        logging.warning(
+            '%s layer of type %s has dynamic output shape.',
+            node_name, node.get_type_name()
+        )
+
         return get_shape_safely(partial_shape)
     return [s for s in partial_shape.to_shape()]
 
