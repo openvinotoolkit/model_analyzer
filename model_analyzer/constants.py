@@ -23,7 +23,7 @@ class ModelTypes(Enum):
     YOLO_V4 = 'yolo_v4'
     TINY_YOLO_V3_V4 = 'tiny_yolo_v3_v4'
     SSD = 'ssd'
-    CLASSIFICATION = 'classification'
+    CLASSIFICATION = 'classificator'
     SEMANTIC_SEGM = 'segmentation'
     INSTANCE_SEGM = 'mask_rcnn'
     INAPINTING = 'inpainting'
