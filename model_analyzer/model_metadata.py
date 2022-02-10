@@ -140,7 +140,7 @@ class ModelMetaData:
             return roles
 
         dims = {}
-        for candidate in self.input_layers:
+        for candidate in self.inputs:
             shape = get_shape_for_node_safely(candidate)
             if shape[2]:
                 dims[candidate.any_name] = shape[2]
@@ -486,7 +486,7 @@ class ModelMetaData:
 
     def _is_super_resolution(self) -> bool:
 
-        if self.outputs or not self._all_outputs_are_images():
+        if not self._all_outputs_are_images():
             return False
 
         single_stream = len(self.input_names) == 1 and len(self.outputs) == 1
