@@ -33,8 +33,6 @@ class ModelMetaData:
         self._model_file_suffix = model_path.suffix
         self.xml = None if self._is_onnx else ElementTree.parse(model_path)
 
-        self.input_layers = [model_input.node for model_input in self.model.inputs]
-
     def _constant_folding(self):
         try:
             pass_manager = Manager()
@@ -140,7 +138,7 @@ class ModelMetaData:
             return roles
 
         dims = {}
-        for candidate in self.input_layers:
+        for candidate in self.inputs:
             shape = get_shape_for_node_safely(candidate)
             if shape[2]:
                 dims[candidate.any_name] = shape[2]
@@ -486,13 +484,14 @@ class ModelMetaData:
 
     def _is_super_resolution(self) -> bool:
 
-        if self.outputs or not self._all_outputs_are_images():
+        if not self._all_outputs_are_images():
             return False
 
         single_stream = len(self.input_names) == 1 and len(self.outputs) == 1
         double_stream = len(self.input_names) == 2 and len(self.outputs) == 1
 
-        input_shapes = [get_shape_for_node_safely(candidate) for candidate in self.input_layers]
+        input_nodes = [model_input.node for model_input in self.model.inputs]
+        input_shapes = [get_shape_for_node_safely(candidate) for candidate in input_nodes]
 
         output_shape = next(self._get_output_shape(candidate) for candidate in self.outputs)
 
