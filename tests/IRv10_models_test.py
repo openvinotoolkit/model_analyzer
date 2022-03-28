@@ -3,7 +3,8 @@
 
 import pytest
 
-from model_analyzer.model_metadata import ModelMetaData, ModelTypes
+from model_analyzer.model_metadata import ModelMetaData
+from model_analyzer.model_type_guesser import ModelType, ModelTypeGuesser
 from tests.generic_e2e_test_case import GenericE2ETestCase, MODEL_PATHS, MODEL_PATHS_TYPE
 from tests.utils import load_test_config
 
@@ -46,16 +47,17 @@ class TestCaseR1Models(GenericE2ETestCase):
             bin_path = self.data_dir / bin_path
 
             if model_type == 'detection':
-                expected = ModelTypes.SSD
+                expected = ModelType.SSD
             elif model_type == 'instance_segmentation':
-                expected = ModelTypes.INSTANCE_SEGM
+                expected = ModelType.INSTANCE_SEGM
             elif model_type == 'semantic_segmentation':
-                expected = ModelTypes.SEMANTIC_SEGM
+                expected = ModelType.SEMANTIC_SEGM
             elif model_type == 'yolo':
-                expected = ModelTypes.YOLO
+                expected = ModelType.YOLO
             else:
                 expected = model_type
 
-            result = ModelMetaData(xml_path, bin_path).guess_topology_type()
+            model_metadata = ModelMetaData(xml_path, bin_path)
+            result = ModelTypeGuesser.get_model_type(model_metadata)
 
             assert expected == result
