@@ -49,9 +49,9 @@ class TestCaseR1Models(GenericE2ETestCase):
             if model_type == 'detection':
                 expected = ModelType.SSD
             elif model_type == 'instance_segmentation':
-                expected = ModelType.INSTANCE_SEGM
+                expected = ModelType.INSTANCE_SEGMENTATION
             elif model_type == 'semantic_segmentation':
-                expected = ModelType.SEMANTIC_SEGM
+                expected = ModelType.SEMANTIC_SEGMENTATION
             elif model_type == 'yolo':
                 expected = ModelType.YOLO
             else:

@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from pathlib import Path
-from typing import Dict, Optional, Tuple, List, Union, Set
+from typing import Dict, Optional, Tuple, List, Set
 from xml.etree import ElementTree
 
 # pylint: disable=import-error
 from openvino.runtime import ConstOutput, Node, Model, Layout
 
-from model_analyzer.constants import LayoutTypes
 from model_analyzer.layout_utils import is_batched_image_layout, parse_node_layout, is_image_info_layout
 from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
 from model_analyzer.shape_utils import get_shape_for_node_safely
@@ -59,7 +58,8 @@ class ModelMetaData:
                 return get_shape_for_node_safely(parameter_node)[batch_index]
         return None
 
-    def get_ir_version(self) -> Optional[int]:
+    @property
+    def ir_version(self) -> Optional[int]:
         """Return IR version or `None` if the attribute is absent."""
         if not self.xml:
             return None
@@ -70,7 +70,8 @@ class ModelMetaData:
         except (TypeError, ValueError):
             return None
 
-    def get_opsets(self) -> List[str]:
+    @property
+    def op_sets(self) -> List[str]:
         op_sets = set()
         for op in self.ops:
             type_info = op.type_info
@@ -80,10 +81,16 @@ class ModelMetaData:
     def is_obsolete(self) -> bool:
         return not bool(self.model)
 
-    def get_framework(self) -> str:
+    @property
+    def framework(self) -> Optional[str]:
         if self._is_onnx:
             return 'onnx'
-        return self.xml.find('./meta_data/cli_parameters/framework').attrib['value']
+        if not self.xml:
+            return None
+        framework = self.xml.find('./meta_data/cli_parameters/framework')
+        if not framework:
+            return None
+        return framework.attrib['value']
 
     @property
     def outputs(self) -> List[ConstOutput]:
@@ -93,14 +100,6 @@ class ModelMetaData:
     def inputs(self) -> List[ConstOutput]:
         return self.model.inputs
 
-    @property
-    def input_names(self) -> List[str]:
-        return [model_input.node.name for model_input in self.inputs]
-
-    @property
-    def output_names(self) -> List[str]:
-        return [model_output.node.name for model_output in self.outputs]
-
     def find_input_info_layer(self) -> Optional[str]:
         """Return the name of the IMAGE_INFO layer. Instance segmentation only."""
         for model_input in self.inputs:
@@ -108,105 +107,6 @@ class ModelMetaData:
             if is_image_info_layout(layout):
                 return model_input.any_name
         return None
-
-    def analyze_inpainting_inputs(self) -> Dict[str, str]:
-        """Return input predictions for image and mask layers. InPainting only."""
-        roles = {}
-        for model_input in self.inputs:
-            parameter_node = model_input.node
-            shape = get_shape_for_node_safely(parameter_node)
-            layout = parse_node_layout(parameter_node)
-            if not is_batched_image_layout(layout):
-                continue
-            c_index = layout.index('C')
-            if shape[c_index] == 1:  # C dimension is 1
-                roles['mask'] = model_input.any_name
-            elif shape[c_index] == 3:  # C dimension is 3:
-                roles['image'] = model_input.any_name
-
-        return roles
-
-    def analyze_super_resolution_inputs(self) -> Dict[str, str]:
-        """Return input predictions for low-res and upsampling inputs. Super-resolution only."""
-        roles = {}
-        if len(self.input_names) == 1:
-            roles['low-res'] = self.input_names[0]
-            return roles
-
-        dims = {}
-        for candidate in self.inputs:
-            shape = get_shape_for_node_safely(candidate)
-            if shape[2]:
-                dims[candidate.any_name] = shape[2]
-        dims_sorted = [k for k, _ in sorted(dims.items(), key=lambda item: item[1])]
-        roles['low-res'] = dims_sorted[0]
-        roles['upsample'] = dims_sorted[1] if len(dims_sorted) > 1 else None
-
-        return roles
-
-    def analyze_output_roles(self) -> Optional[Dict[str, str]]:
-        """Return role predictions for output layers. Instance Segmentation only."""
-        roles = {}
-        framework = self.get_framework()
-        if framework == 'onnx':
-            roles = self._get_output_roles_for_instance_segm_from_onnx()
-        elif framework == 'tf':
-            roles = self._get_output_roles_for_instance_segm_from_tf()
-        return roles or None
-
-    def _get_output_roles_for_instance_segm_from_onnx(self) -> Dict[str, str]:
-        roles = {}
-        for result in self.outputs:
-            node = result.node
-            result_precision = node.get_output_element_type(0).get_type_name()
-            layout = parse_node_layout(node)
-
-            if result_precision in {'i32', 'i16'}:
-                roles['classes_out'] = result.any_name
-                continue
-            if result_precision in {'f32', 'f16'} and layout == LayoutTypes.C:
-                roles['scores_out'] = result.any_name
-                continue
-            if layout == LayoutTypes.NC:
-                roles['boxes_out'] = result.any_name
-                continue
-            if is_batched_image_layout(layout):  # Layout is NCHW
-                roles['raw_masks_out'] = result.any_name
-        return roles
-
-    def _get_output_roles_for_instance_segm_from_tf(self) -> Dict[str, str]:
-        roles = {}
-        for result in self.outputs:
-            node = result.node
-            layout = parse_node_layout(node)
-            if layout == LayoutTypes.NC:
-                roles['detection_out'] = result.any_name
-                continue
-            if is_batched_image_layout(layout):
-                roles['raw_masks_out'] = result.any_name
-        return roles
-
-    def get_yolo_v2_params(self) -> Dict[str, Union[str, int]]:
-        """Extract model params from the output layer of the model. YOLOv2/TinyYOLOv2 only."""
-        params = {}
-        relevant_attributes = {'classes', 'coords', 'num'}
-        output_attributes = self.outputs[0].node.get_attributes()
-        for attribute in relevant_attributes:
-            params[attribute] = output_attributes.get(attribute)
-
-        return params
-
-    def is_argmax_used(self):
-        """Return info on whether the model output is argmaxed. Semantic Segmentation only"""
-        output_node = self.outputs[0]
-        layout = parse_node_layout(output_node)
-
-        c_index = layout.index('C')
-        if not c_index:
-            return False
-
-        output_shape = get_shape_for_node_safely(output_node)
-        return output_shape[c_index] == 1
 
     def get_mo_params(self) -> Optional[Dict[str, str]]:
         """Return Model Optimizer CLI parameters from IR metadata, `None` if the node is absent."""
@@ -220,7 +120,7 @@ class ModelMetaData:
             mo_cli_params['version'] = mo_version_node.attrib['value']
         return mo_cli_params or None
 
-    def has_layer_of_type(self, *layer_types: str) -> bool:
+    def has_op_of_type(self, *layer_types: str) -> bool:
         """Return True if the model has a layer whose type is in `layer_types`."""
         for layer in self.ops:
             if layer.get_type_name() in layer_types:
@@ -229,7 +129,7 @@ class ModelMetaData:
 
     def is_int8(self) -> bool:
         """Return True if the model was Int8 quantized."""
-        return self.has_layer_of_type('FakeQuantize')
+        return self.has_op_of_type('FakeQuantize')
 
     def is_winograd(self) -> bool:
         """Return True if the model was adapted for Winograd algorithm."""
@@ -283,9 +183,9 @@ class ModelMetaData:
             indicator = len(shape) == 2 and shape[1] == 1001
         return True if indicator else None
 
-    def get_layers_ids(self) -> Dict[str, str]:
-        layer_names = [x.name for x in self.ops]
-        return {layer_names[i]: i for i in range(len(layer_names))}
+    @property
+    def ops_ids(self) -> Dict[str, int]:
+        return {op.friendly_name: i for i, op in enumerate(self.ops)}
 
     def get_exec_graph_int8layers(self, device: str = 'CPU') -> Tuple[list, list]:
         int8layers = []
@@ -320,7 +220,3 @@ class ModelMetaData:
 
     def is_model_dynamic(self) -> bool:
         return self.model.is_dynamic()
-
-    @staticmethod
-    def get_output_shape(output: ConstOutput) -> List[int]:
-        return get_shape_for_node_safely(output)

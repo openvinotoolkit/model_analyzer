@@ -1,7 +1,7 @@
 # Copyright (C) 2019-2022 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional, List
+from typing import Optional, List, Type, Dict, Any
 
 from model_analyzer.constants import YoloAnchors
 from model_analyzer.layout_utils import parse_node_layout
@@ -9,8 +9,31 @@ from model_analyzer.model_metadata.model_metadata import ModelMetaData
 from model_analyzer.model_type_guesser.model_type import ModelType
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
+from model_analyzer.model_analyzer.constants import LayoutTypes
+from model_analyzer.model_analyzer.layout_utils import is_batched_image_layout
 
-class GenericModelTypeAnalyzer:
+
+class ModelTypeAnalyzerCreator:
+    _types_map = dict()
+
+    @staticmethod
+    def register_type_of_layer(new_class: Type['GenericModelTypeAnalyzer']) -> None:
+        for layer_type in [x.lower() for x in new_class.get_type()]:
+            ModelTypeAnalyzerCreator._types_map[layer_type] = new_class
+
+    @staticmethod
+    def create(model_type: ModelType, model_metadata: ModelMetaData) -> 'GenericModelTypeAnalyzer':
+        return ModelTypeAnalyzerCreator._types_map.get(model_type, GenericModelTypeAnalyzer)(model_metadata)
+
+
+class _ModelTypeAnalyzerMetadata(type):
+    def __new__(cls, *args, **kwargs):
+        new_class = super(_ModelTypeAnalyzerMetadata, cls).__new__(cls, *args, **kwargs)
+        ModelTypeAnalyzerCreator.register_type_of_layer(new_class)
+        return new_class
+
+
+class GenericModelTypeAnalyzer(metaclass=_ModelTypeAnalyzerMetadata):
     _topology_type = ModelType.GENERIC
 
     def __init__(self, model_metadata: ModelMetaData):
@@ -22,6 +45,10 @@ class GenericModelTypeAnalyzer:
         Need to overwrite in each child class
         """
         return True
+
+    @property
+    def specific_parameters(self) -> Dict[str, Any]:
+        return {}
 
     @classmethod
     def get_type(cls) -> ModelType:
@@ -52,6 +79,20 @@ class GenericYoloTypeAnalyzer(GenericModelTypeAnalyzer):
     @classmethod
     def is_like(cls, model_metadata: ModelMetaData) -> bool:
         return cls._has_region_yolo_node(model_metadata)
+
+    @property
+    def specific_parameters(self) -> Dict[str, Any]:
+        """Extract model params from the output layer of the model. YOLOv2/TinyYOLOv2 only."""
+        params = {
+            'classes': None,
+            'coords': None,
+            'num': None
+        }
+        output_attributes = self.model_metadata.outputs[0].node.get_attributes()
+        for attribute in params:
+            params[attribute] = output_attributes.get(attribute)
+
+        return params
 
     @classmethod
     def _is_yolo_like(cls, model_metadata: ModelMetaData, output_count: int) -> bool:
@@ -120,7 +161,7 @@ class YoloV2TypeAnalyzer(GenericYoloTypeAnalyzer):
         )
 
 
-class TinyYoloV2TypeAnalyzer(GenericYoloTypeAnalyzer):
+class TinyYoloV2TypeAnalyzer(YoloV2TypeAnalyzer):
     _topology_type = ModelType.TINY_YOLO_V2
 
     @classmethod
@@ -128,14 +169,6 @@ class TinyYoloV2TypeAnalyzer(GenericYoloTypeAnalyzer):
         if cls._has_region_yolo_node(model_metadata):
             return cls._get_anchors(model_metadata) == YoloAnchors.tiny_yolo_v2.value
         return cls._is_yolo_like(model_metadata, output_count=1)
-
-
-class YoloV4TypeAnalyzer(GenericYoloTypeAnalyzer):
-    _topology_type = ModelType.YOLO_V4
-
-    @classmethod
-    def is_like(cls, model_metadata: ModelMetaData) -> bool:
-        return cls._is_yolo_like(model_metadata, output_count=3)
 
 
 class YoloV3TypeAnalyzer(GenericYoloTypeAnalyzer):
@@ -148,8 +181,23 @@ class YoloV3TypeAnalyzer(GenericYoloTypeAnalyzer):
                 cls._get_anchors(model_metadata) == YoloAnchors.yolo_v3.value
         )
 
+    @property
+    def specific_parameters(self) -> Dict[str, Any]:
+        return {
+            'yolo_outputs': sorted(self.model_metadata.output_names),
+            'raw_output': self.model_metadata.yolo_has_raw_output()
+        }
 
-class TinyYoloV3V4TypeAnalyzer(GenericYoloTypeAnalyzer):
+
+class YoloV4TypeAnalyzer(YoloV3TypeAnalyzer):
+    _topology_type = ModelType.YOLO_V4
+
+    @classmethod
+    def is_like(cls, model_metadata: ModelMetaData) -> bool:
+        return cls._is_yolo_like(model_metadata, output_count=3)
+
+
+class TinyYoloV3V4TypeAnalyzer(YoloV3TypeAnalyzer):
     _topology_type = ModelType.YOLO_V3
 
     @classmethod
@@ -196,7 +244,7 @@ class ClassificationTypeAnalyzer(GenericModelTypeAnalyzer):
 
 
 class InstanceSegmentationTypeAnalyzer(GenericModelTypeAnalyzer):
-    _topology_type = ModelType.INSTANCE_SEGM
+    _topology_type = ModelType.INSTANCE_SEGMENTATION
 
     @classmethod
     def is_like(cls, model_metadata: ModelMetaData) -> bool:
@@ -209,9 +257,67 @@ class InstanceSegmentationTypeAnalyzer(GenericModelTypeAnalyzer):
                 or 'ExperimentalDetectronROIFeatureExtractor' in layer_types
         )
 
+    @property
+    def specific_parameters(self) -> Dict[str, Any]:
+        roles = self.model_metadata.analyze_output_roles()
+        input_info = self.model_metadata.find_input_info_layer()
+        input_per_role = {}
+        if input_info and roles:
+            return {
+                self.get_type().value: {
+                    'image_info_input': input_info or '',
+                    'outputs': roles
+                }
+            }
+        return input_per_role
+
+    @property
+    def _output_roles(self) -> Optional[Dict[str, str]]:
+        """Return role predictions for output layers."""
+        framework = self.model_metadata.framework
+        if framework == 'onnx':
+            return self._output_roles_for_model_from_onnx
+        if framework == 'tf':
+            return self._output_roles_for_model_from_tf
+        return None
+
+    @property
+    def _output_roles_for_model_from_onnx(self) -> Dict[str, str]:
+        roles = {}
+        for result in self.model_metadata.outputs:
+            node = result.node
+            result_precision = node.get_output_element_type(0).get_type_name()
+            layout = parse_node_layout(node)
+
+            if result_precision in {'i32', 'i16'}:
+                roles['classes_out'] = result.any_name
+                continue
+            if result_precision in {'f32', 'f16'} and layout == LayoutTypes.C:
+                roles['scores_out'] = result.any_name
+                continue
+            if layout == LayoutTypes.NC:
+                roles['boxes_out'] = result.any_name
+                continue
+            if is_batched_image_layout(layout):  # Layout is NCHW
+                roles['raw_masks_out'] = result.any_name
+        return roles
+
+    @property
+    def _output_roles_for_model_from_tf(self) -> Dict[str, str]:
+        roles = {}
+        for result in self.model_metadata.outputs:
+            node = result.node
+            layout = parse_node_layout(node)
+            if layout == LayoutTypes.NC:
+                roles['detection_out'] = result.any_name
+                continue
+            if is_batched_image_layout(layout):
+                roles['raw_masks_out'] = result.any_name
+        return roles
+
 
 class SemanticSegmentationTypeAnalyzer(GenericModelTypeAnalyzer):
-    _topology_type = ModelType.INSTANCE_SEGM
+    _topology_type = ModelType.INSTANCE_SEGMENTATION
 
     @classmethod
     def is_like(cls, model_metadata: ModelMetaData) -> bool:
@@ -246,6 +352,24 @@ class SemanticSegmentationTypeAnalyzer(GenericModelTypeAnalyzer):
 
         return equal_dims and len(dilations) > 1 and 'Elu' not in ops_types
 
+    @property
+    def specific_parameters(self) -> Dict[str, Any]:
+        return {
+            'use_argmax': not self.model_metadata.is_argmax_used()
+        }
+
+    def is_argmax_used(self):
+        """Return info on whether the model output is argmaxed. Semantic Segmentation only"""
+        output_node = self.model_metadata.outputs[0]
+        layout = parse_node_layout(output_node)
+
+        c_index = layout.index('C')
+        if not c_index:
+            return False
+
+        output_shape = get_shape_for_node_safely(output_node)
+        return output_shape[c_index] == 1
+
 
 class InPaintingTypeAnalyzer(GenericModelTypeAnalyzer):
     _topology_type = ModelType.IN_PAINTING
@@ -253,6 +377,30 @@ class InPaintingTypeAnalyzer(GenericModelTypeAnalyzer):
     @classmethod
     def is_like(cls, model_metadata: ModelMetaData) -> bool:
         return 'Elu' in model_metadata.ops_types and len(model_metadata.inputs) == 2
+
+    @property
+    def specific_parameters(self) -> Dict[str, Any]:
+        return {
+            self.get_type().value: self._inputs_roles
+        }
+
+    @property
+    def _inputs_roles(self):
+        """Return input predictions for image and mask layers. InPainting only."""
+        roles = {}
+        for model_input in self.model_metadata.inputs:
+            shape = get_shape_for_node_safely(model_input)
+            parameter_node = model_input.node
+            layout = parse_node_layout(parameter_node)
+            if not is_batched_image_layout(layout):
+                continue
+            c_index = layout.index('C')
+            if shape[c_index] == 1:  # C dimension is 1
+                roles['mask'] = model_input.any_name
+            elif shape[c_index] == 3:  # C dimension is 3:
+                roles['image'] = model_input.any_name
+
+        return roles
 
 
 class StyleTransferTypeAnalyzer(GenericModelTypeAnalyzer):
@@ -293,6 +441,31 @@ class SuperResolutionTypeAnalyzer(GenericModelTypeAnalyzer):
                     proportional_dims = input_shape[2] / output_shape[2] == input_shape[3] / output_shape[3]
 
         return single_stream or double_stream and proportional_dims
+
+    @property
+    def specific_parameters(self) -> Dict[str, Any]:
+        return {
+            self.get_type().value: self._inputs_roles
+        }
+
+    @property
+    def _inputs_roles(self):
+        """Return input predictions for low-res and upsampling inputs. Super-resolution only."""
+        roles = {}
+        if len(self.model_metadata.inputs) == 1:
+            roles['low-res'] = self.model_metadata.inputs[0].any_name
+            return roles
+
+        dims = {}
+        for candidate in self.model_metadata.inputs:
+            shape = get_shape_for_node_safely(candidate)
+            if shape[2]:
+                dims[candidate.any_name] = shape[2]
+        dims_sorted = [k for k, _ in sorted(dims.items(), key=lambda item: item[1])]
+        roles['low-res'] = dims_sorted[0]
+        roles['upsample'] = dims_sorted[1] if len(dims_sorted) > 1 else None
+
+        return roles
 
 
 class FaceRecognitionTypeAnalyzer(GenericModelTypeAnalyzer):

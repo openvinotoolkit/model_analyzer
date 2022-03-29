@@ -186,7 +186,7 @@ class ModelComputationalComplexity:
             info_writer.writerow(
                 ['LayerType', 'LayerName', 'GFLOPs', 'GIOPs', 'MParams', 'LayerParams', 'InputBlobs', 'OutputBlobs']
             )
-            layers_ids = self._model_metadata.get_layers_ids()
+            layers_ids = self._model_metadata.ops_ids
             try:
                 sorted_layers = sorted(self._computational_complexity.keys(), key=lambda x: layers_ids[x])
             except (KeyError, TypeError):

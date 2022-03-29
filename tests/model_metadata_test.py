@@ -116,7 +116,7 @@ def has_layer_type_test_params(request) -> Tuple[str, Tuple[str,...], bool]:
 def test_has_layer_type(has_layer_type_test_params: Tuple[str, Tuple[str,...], bool]):
     model_name, layer_types, expected = has_layer_type_test_params
     mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = mmd.has_layer_of_type(*layer_types)
+    result = mmd.has_op_of_type(*layer_types)
     assert result == expected
 
 
