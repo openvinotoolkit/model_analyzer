@@ -150,11 +150,11 @@ class ModelMetaData:
         if 'RegionYolo' in self.ops_types:
             operation = next(filter(lambda operation: operation.get_type_name() == 'RegionYolo', self.ops))
             params = operation.get_attributes()
-            num_classes = params['classes']
+            num_classes = params.get('num_classes')
         elif 'DetectionOutput' in self.ops_types:
             operation = next(filter(lambda operation: operation.get_type_name() == 'DetectionOutput', self.ops))
             params = operation.get_attributes()
-            num_classes = params['num_classes']
+            num_classes = params.get('num_classes')
         elif 'SoftMax' in self.ops_types:
             operation = next(filter(lambda operation: operation.get_type_name().lower() == 'SoftMax', self.ops))
             out_shape = get_shape_for_node_safely(operation)
@@ -162,7 +162,7 @@ class ModelMetaData:
         else:
             return None
 
-        return int(num_classes)
+        return int(num_classes) if num_classes else None
 
     @property
     def has_background_class(self) -> Optional[bool]:
@@ -173,15 +173,15 @@ class ModelMetaData:
         output = self.outputs[0]
 
         node = output.node
-        output_type = node.get_type_name().lower()
+        output_type = node.get_type_name()
         params = node.get_attributes()
 
         indicator = False
-        if output_type == 'regionyolo':
+        if output_type == 'RegionYolo':
             indicator = 'background_label_id' in params
-        elif output_type == 'detectionoutput':
+        elif output_type == 'DetectionOutput':
             indicator = 'attrs.background_label_id' in params or 'background_label_id' in params
-        elif output_type == 'softmax':
+        elif output_type == 'SoftMax':
             shape = get_shape_for_node_safely(node)
             indicator = len(shape) == 2 and shape[1] == 1001
         return True if indicator else None
