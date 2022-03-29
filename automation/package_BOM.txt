@@ -6,12 +6,11 @@ model_analyzer/constants.py
 model_analyzer/layer_provider.py
 model_analyzer/layout_utils.py
 model_analyzer/model_complexity.py
-model_analyzer/model_metadata/__init__.py
-model_analyzer/model_metadata/model_metadata.py
-model_analyzer/model_type_guesser/__init__.py
-model_analyzer/model_type_guesser/model_type.py
-model_analyzer/model_type_guesser/model_type_analyzer.py
-model_analyzer/model_type_guesser/model_type_guesser.py
+model_analyzer/model_metadata.py
+model_analyzer/model_type_analyzer/__init__.py
+model_analyzer/model_type_analyzer/model_type.py
+model_analyzer/model_type_analyzer/model_type_analyzer.py
+model_analyzer/model_type_analyzer/model_type_guesser.py
 model_analyzer/openvino_core_service.py
 model_analyzer/shape_utils.py
 model_analyzer/uncounted_layers.py

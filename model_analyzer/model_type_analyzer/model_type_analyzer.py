@@ -5,7 +5,7 @@ from typing import Optional, List, Type, Dict, Any
 
 from model_analyzer.constants import YoloAnchors
 from model_analyzer.layout_utils import parse_node_layout
-from model_analyzer.model_metadata.model_metadata import ModelMetaData
+from model_analyzer.model_metadata import ModelMetaData
 from model_analyzer.model_type_analyzer.model_type import ModelType
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
