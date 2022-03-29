@@ -104,7 +104,7 @@ def mo_parameters_test_params(request) -> Tuple[str, Dict[str, str]]:
 def test_get_mo_params(mo_parameters_test_params: Tuple[str, Dict[str, str]]):
     model_name, expected = mo_parameters_test_params
     mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    assert mmd.mo_parameters == expected
+    assert mmd.mo_params == expected
 
 
 @pytest.fixture(params=[
