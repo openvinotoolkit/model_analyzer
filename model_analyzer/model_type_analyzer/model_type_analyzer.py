@@ -508,4 +508,3 @@ class LandmarkDetectionTypeAnalyzer(GenericModelTypeAnalyzer):
             reduced_dims = output_shapes[2] == output_shapes[3] == 1
 
         return 'PRelu' in model_metadata.ops_types and reduced_dims
-

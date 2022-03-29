@@ -8,7 +8,7 @@ from xml.etree import ElementTree
 # pylint: disable=import-error
 from openvino.runtime import ConstOutput, Node, Model, Layout
 
-from model_analyzer.layout_utils import is_batched_image_layout, parse_node_layout, is_image_info_layout
+from model_analyzer.layout_utils import parse_node_layout, is_image_info_layout
 from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
@@ -73,8 +73,8 @@ class ModelMetaData:
     @property
     def op_sets(self) -> List[str]:
         op_sets = set()
-        for op in self.ops:
-            type_info = op.type_info
+        for operation in self.ops:
+            type_info = operation.type_info
             op_sets.add(type_info.version_id)
         return sorted(list(op_sets))
 
