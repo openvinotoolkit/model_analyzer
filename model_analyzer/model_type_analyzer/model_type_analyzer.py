@@ -1,5 +1,7 @@
 # Copyright (C) 2019-2022 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
+from functools import reduce
+import operator
 
 from typing import Optional, List, Type, Dict, Any
 
@@ -183,8 +185,8 @@ class YoloV3TypeAnalyzer(GenericYoloTypeAnalyzer):
     @property
     def specific_parameters(self) -> Dict[str, Any]:
         return {
-            'yolo_outputs': sorted(self.model_metadata.output_names),
-            'raw_output': self.model_metadata.yolo_has_raw_output()
+            'yolo_outputs': sorted(self.model_metadata.outputs),
+            'raw_output': self._has_region_yolo_node(self.model_metadata)
         }
 
 
@@ -258,7 +260,7 @@ class InstanceSegmentationTypeAnalyzer(GenericModelTypeAnalyzer):
 
     @property
     def specific_parameters(self) -> Dict[str, Any]:
-        roles = self.model_metadata.analyze_output_roles()
+        roles = self._output_roles
         input_info = self.model_metadata.find_input_info_layer()
         input_per_role = {}
         if input_info and roles:
@@ -354,11 +356,12 @@ class SemanticSegmentationTypeAnalyzer(GenericModelTypeAnalyzer):
     @property
     def specific_parameters(self) -> Dict[str, Any]:
         return {
-            'use_argmax': not self.model_metadata.is_argmax_used()
+            'use_argmax': not self.is_argmax_used
         }
 
+    @property
     def is_argmax_used(self):
-        """Return info on whether the model output is argmaxed. Semantic Segmentation only"""
+        """Return info on whether the model output is argmaxed"""
         output_node = self.model_metadata.outputs[0]
         layout = parse_node_layout(output_node)
 
@@ -483,8 +486,11 @@ class FaceRecognitionTypeAnalyzer(GenericModelTypeAnalyzer):
 
         output_layer = model_metadata.outputs[0]
         output_shapes = get_shape_for_node_safely(output_layer)
+        output_shapes = output_shapes[1:]
 
-        return {'PRelu', 'NormalizeL2'} & model_metadata.ops_types and len(output_shapes) == 2
+        product = reduce(operator.mul, output_shapes, 1)
+
+        return {'PRelu', 'NormalizeL2'} & model_metadata.ops_types and product == max(output_shapes)
 
 
 class LandmarkDetectionTypeAnalyzer(GenericModelTypeAnalyzer):
