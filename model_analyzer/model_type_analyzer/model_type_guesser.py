@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from model_analyzer.model_metadata.model_metadata import ModelMetaData
-from model_analyzer.model_type_guesser.model_type import ModelType
-from model_analyzer.model_type_guesser.model_type_analyzer import (
+from model_analyzer.model_type_analyzer.model_type import ModelType
+from model_analyzer.model_type_analyzer.model_type_analyzer import (
     YoloV2TypeAnalyzer, TinyYoloV2TypeAnalyzer, YoloV3TypeAnalyzer, YoloV4TypeAnalyzer, TinyYoloV3V4TypeAnalyzer,
     GenericYoloTypeAnalyzer, SSDTypeAnalyzer, ClassificationTypeAnalyzer, InstanceSegmentationTypeAnalyzer,
     SemanticSegmentationTypeAnalyzer, InPaintingTypeAnalyzer, StyleTransferTypeAnalyzer, SuperResolutionTypeAnalyzer,

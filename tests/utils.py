@@ -7,11 +7,9 @@ import shutil
 from pathlib import Path
 
 
-def load_test_config(config_name):
+def load_test_config(config_path: Path):
     tests_dir = Path(__file__).resolve().parent
 
-    data_dir = tests_dir / 'data'
-    config_path = data_dir / config_name
     artifacts_dir = tests_dir / 'output'
 
     if artifacts_dir.is_dir():

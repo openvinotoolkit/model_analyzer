@@ -8,9 +8,12 @@ import pytest
 import os
 
 from model_analyzer.model_metadata import ModelMetaData
+from tests.constants import CONFIGS_FOLDER
 from tests.utils import load_test_config
 
-_, CONFIG_DATA = load_test_config('IRv10_models.json')
+config_path = CONFIGS_FOLDER / 'IRv10_models.json'
+
+_, CONFIG_DATA = load_test_config(config_path)
 
 
 def get_xml_and_bin_path(model_name: str) -> Tuple[Path, Path]:

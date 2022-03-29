@@ -6,11 +6,11 @@ from typing import Optional, List, Type, Dict, Any
 from model_analyzer.constants import YoloAnchors
 from model_analyzer.layout_utils import parse_node_layout
 from model_analyzer.model_metadata.model_metadata import ModelMetaData
-from model_analyzer.model_type_guesser.model_type import ModelType
+from model_analyzer.model_type_analyzer.model_type import ModelType
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
-from model_analyzer.model_analyzer.constants import LayoutTypes
-from model_analyzer.model_analyzer.layout_utils import is_batched_image_layout
+from model_analyzer.constants import LayoutTypes
+from model_analyzer.layout_utils import is_batched_image_layout
 
 
 class ModelTypeAnalyzerCreator:
@@ -18,8 +18,7 @@ class ModelTypeAnalyzerCreator:
 
     @staticmethod
     def register_type_of_layer(new_class: Type['GenericModelTypeAnalyzer']) -> None:
-        for layer_type in [x.lower() for x in new_class.get_type()]:
-            ModelTypeAnalyzerCreator._types_map[layer_type] = new_class
+        ModelTypeAnalyzerCreator._types_map[new_class.get_type()] = new_class
 
     @staticmethod
     def create(model_type: ModelType, model_metadata: ModelMetaData) -> 'GenericModelTypeAnalyzer':

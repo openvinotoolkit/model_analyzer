@@ -8,13 +8,11 @@ from typing import List, Tuple
 
 from model_analyzer.layer_provider import LayerTypesManager, LayerType, Constant, Result, Parameter
 from model_analyzer.model_metadata import ModelMetaData
-
-
-# pylint: disable=too-many-instance-attributes
-from model_analyzer.model_type_guesser import ModelTypeGuesser
+from model_analyzer.model_type_analyzer import ModelTypeGuesser
 from model_analyzer.value_converter import ValueConverter
 
 
+# pylint: disable=too-many-instance-attributes
 class ModelComputationalComplexity:
     def __init__(self, metadata: ModelMetaData):
         self._model_metadata = metadata

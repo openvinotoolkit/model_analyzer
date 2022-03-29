@@ -4,11 +4,14 @@
 import pytest
 
 from model_analyzer.model_metadata import ModelMetaData
-from model_analyzer.model_type_guesser import ModelType, ModelTypeGuesser
+from model_analyzer.model_type_analyzer import ModelType, ModelTypeGuesser
+from tests.constants import CONFIGS_FOLDER
 from tests.generic_e2e_test_case import GenericE2ETestCase, MODEL_PATHS, MODEL_PATHS_TYPE
 from tests.utils import load_test_config
 
-ARTIFACTS_DIR, DATA = load_test_config('IRv10_models.json')
+config_path = CONFIGS_FOLDER / 'IRv10_models.json'
+
+ARTIFACTS_DIR, DATA = load_test_config(config_path)
 
 
 class TestCaseR1Models(GenericE2ETestCase):
@@ -38,7 +41,7 @@ class TestCaseR1Models(GenericE2ETestCase):
         xml_path, bin_path, model_type = get_model_info_topology
         if 'road-segmentation-adas-0001' in str(xml_path):
             return 
-        cannot_recognize = ['face_recognition', 'object_attributes', 'optical_character_recognition',
+        cannot_recognize = ['object_attributes', 'optical_character_recognition',
                             'head_pose_estimation', 'human_pose_estimation', 'image_processing', 'feature_extraction',
                             'action_recognition', 'detection-']
 
