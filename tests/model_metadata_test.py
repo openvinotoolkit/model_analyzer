@@ -48,7 +48,7 @@ def model_version_test_params(request) -> Tuple[str, int]:
 def test_get_ir_version(model_version_test_params: Tuple[str, int]):
     model, expected = model_version_test_params
     nmd = ModelMetaData(*get_xml_and_bin_path(model))
-    result = nmd.get_ir_version()
+    result = nmd.ir_version
     assert result == expected
 
 

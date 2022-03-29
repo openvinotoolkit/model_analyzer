@@ -145,17 +145,17 @@ class ModelMetaData:
         if len(self.outputs) != 1:
             return None
 
-        if 'RegionYolo' in self._layer_types:
+        if 'RegionYolo' in self.ops_types:
             operation = next(filter(lambda operation: operation.get_type_name() == 'RegionYolo', self.ops))
             params = operation.get_attributes()
             num_classes = params['classes']
-        elif 'DetectionOutput' in self._layer_types:
+        elif 'DetectionOutput' in self.ops_types:
             operation = next(filter(lambda operation: operation.get_type_name() == 'DetectionOutput', self.ops))
             params = operation.get_attributes()
             num_classes = params['num_classes']
-        elif 'SoftMax' in self._layer_types:
+        elif 'SoftMax' in self.ops_types:
             operation = next(filter(lambda operation: operation.get_type_name().lower() == 'SoftMax', self.ops))
-            out_shape = self._get_output_shape(operation)
+            out_shape = get_shape_for_node_safely(operation)
             num_classes = out_shape[1]
         else:
             return None
