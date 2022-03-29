@@ -150,7 +150,7 @@ class ModelMetaData:
         if 'RegionYolo' in self.ops_types:
             operation = next(filter(lambda operation: operation.get_type_name() == 'RegionYolo', self.ops))
             params = operation.get_attributes()
-            num_classes = params.get('num_classes')
+            num_classes = params.get('classes')
         elif 'DetectionOutput' in self.ops_types:
             operation = next(filter(lambda operation: operation.get_type_name() == 'DetectionOutput', self.ops))
             params = operation.get_attributes()
