@@ -108,7 +108,8 @@ class ModelMetaData:
                 return model_input.any_name
         return None
 
-    def get_mo_params(self) -> Optional[Dict[str, str]]:
+    @property
+    def mo_params(self) -> Optional[Dict[str, str]]:
         """Return Model Optimizer CLI parameters from IR metadata, `None` if the node is absent."""
 
         mo_cli_params_node = self.xml.find('./meta_data/cli_parameters')
@@ -140,7 +141,8 @@ class ModelMetaData:
                 return True
         return False
 
-    def get_num_classes(self) -> Optional[int]:
+    @property
+    def num_classes(self) -> Optional[int]:
         """Return number of classes the IR supports, if possible."""
         if len(self.outputs) != 1:
             return None
@@ -162,6 +164,7 @@ class ModelMetaData:
 
         return int(num_classes)
 
+    @property
     def has_background_class(self) -> Optional[bool]:
         """Return True if the IR supports background class, None if unknown."""
         if len(self.outputs) != 1:

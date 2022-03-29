@@ -90,8 +90,8 @@ class GenericYoloTypeAnalyzer(GenericModelTypeAnalyzer):
             'num': None
         }
         output_attributes = self.model_metadata.outputs[0].node.get_attributes()
-        for attribute in params:
-            params[attribute] = output_attributes.get(attribute)
+        for attribute_name in params:
+            params[attribute_name] = output_attributes.get(attribute_name)
 
         return params
 
@@ -185,7 +185,7 @@ class YoloV3TypeAnalyzer(GenericYoloTypeAnalyzer):
     @property
     def specific_parameters(self) -> Dict[str, Any]:
         return {
-            'yolo_outputs': sorted(self.model_metadata.outputs),
+            'yolo_outputs': sorted(output.any_name for output in self.model_metadata.outputs),
             'raw_output': self._has_region_yolo_node(self.model_metadata)
         }
 
