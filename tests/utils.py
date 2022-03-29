@@ -5,9 +5,10 @@ import json
 
 import shutil
 from pathlib import Path
+from typing import Tuple
 
 
-def load_test_config(config_path: Path):
+def load_test_config(config_path: Path) -> Tuple[Path, dict]:
     tests_dir = Path(__file__).resolve().parent
 
     artifacts_dir = tests_dir / 'output'
