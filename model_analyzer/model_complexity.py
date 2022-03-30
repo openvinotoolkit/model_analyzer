@@ -9,7 +9,7 @@ from typing import List, Tuple
 from model_analyzer.layer_provider import LayerTypesManager, LayerType, Constant, Result, Parameter
 from model_analyzer.model_metadata import ModelMetaData
 from model_analyzer.model_type_analyzer import ModelTypeGuesser
-from model_analyzer.precision_service import PrecisionService, Precision
+from model_analyzer.precision_service import PrecisionService
 from model_analyzer.value_converter import ValueConverter
 
 

@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
-from typing import List
+from typing import List, Union
 
 # pylint: disable=import-error
+from openvino.runtime import Input, Output, PartialShape
 
-from openvino.runtime import Input, PartialShape
 
-
-def get_shape_for_node_safely(node: Input) -> List[int]:
+def get_shape_for_node_safely(node: Union[Input, Output]) -> List[int]:
     partial_shape = node.get_partial_shape()
     if partial_shape.is_dynamic:
         node = node.get_node()
