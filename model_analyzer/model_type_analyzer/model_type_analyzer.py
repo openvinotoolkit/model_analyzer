@@ -360,17 +360,17 @@ class SemanticSegmentationTypeAnalyzer(GenericModelTypeAnalyzer):
         }
 
     @property
-    def is_argmax_used(self):
+    def is_argmax_used(self) -> bool:
         """Return info on whether the model output is argmaxed"""
         output_node = self.model_metadata.outputs[0]
         layout = parse_node_layout(output_node.node)
+        output_shape = get_shape_for_node_safely(output_node)
 
         if 'C' not in layout:
-            return False
+            return output_shape[1] == 1
 
         c_index = layout.index('C')
 
-        output_shape = get_shape_for_node_safely(output_node)
         return output_shape[c_index] == 1
 
 
