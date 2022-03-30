@@ -365,9 +365,10 @@ class SemanticSegmentationTypeAnalyzer(GenericModelTypeAnalyzer):
         output_node = self.model_metadata.outputs[0]
         layout = parse_node_layout(output_node.node)
 
-        c_index = layout.index('C')
-        if not c_index:
+        if 'C' in layout:
             return False
+
+        c_index = layout.index('C')
 
         output_shape = get_shape_for_node_safely(output_node)
         return output_shape[c_index] == 1
