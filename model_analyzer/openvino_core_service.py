@@ -4,6 +4,8 @@
 from pathlib import Path
 
 # pylint: disable=import-error
+from typing import Tuple
+
 from openvino.runtime import CompiledModel, Core, Model
 
 
@@ -23,6 +25,10 @@ class OpenVINOCoreService(metaclass=SingletonType):
     @property
     def core(self) -> Core:
         return self._core
+
+    @property
+    def available_devices(self) -> Tuple[str]:
+        return self._core.available_devices
 
     def read_model(self, model_path: Path, weights_path: Path) -> Model:
         return self.core.read_model(str(model_path), str(weights_path))

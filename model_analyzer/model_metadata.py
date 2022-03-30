@@ -20,8 +20,9 @@ from model_analyzer.shape_utils import get_shape_for_node_safely
 class ModelMetaData:
     """Retrieve IR metadata using heuristics."""
 
-    def __init__(self, model_path: Path, weights_path: Path):
+    def __init__(self, model_path: Path, weights_path: Path, device: str):
         self.model: Model = OPENVINO_CORE_SERVICE.read_model(str(model_path), str(weights_path))
+        self._device = device
 
         self.ops: List[Node] = self.model.get_ordered_ops()
 
@@ -555,7 +556,7 @@ class ModelMetaData:
         # pylint: disable=too-many-nested-blocks
         if not self.is_int8():
             return [], []
-        compiled_model = OPENVINO_CORE_SERVICE.compile_model(self.model, 'CPU')
+        compiled_model = OPENVINO_CORE_SERVICE.compile_model(self.model, self._device)
         runtime_model = compiled_model.get_runtime_model()
         for execution_node in runtime_model.get_ordered_ops():
             rt_info = execution_node.get_rt_info()
