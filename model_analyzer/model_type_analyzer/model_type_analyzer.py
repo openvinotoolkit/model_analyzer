@@ -363,7 +363,7 @@ class SemanticSegmentationTypeAnalyzer(GenericModelTypeAnalyzer):
     def is_argmax_used(self):
         """Return info on whether the model output is argmaxed"""
         output_node = self.model_metadata.outputs[0]
-        layout = parse_node_layout(output_node)
+        layout = parse_node_layout(output_node.node)
 
         c_index = layout.index('C')
         if not c_index:
