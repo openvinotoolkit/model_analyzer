@@ -9,6 +9,7 @@ from typing import List, Tuple
 from model_analyzer.layer_provider import LayerTypesManager, LayerType, Constant, Result, Parameter
 from model_analyzer.model_metadata import ModelMetaData
 from model_analyzer.model_type_analyzer import ModelTypeGuesser
+from model_analyzer.precision_service import PrecisionService, Precision
 from model_analyzer.value_converter import ValueConverter
 
 
@@ -20,6 +21,7 @@ class ModelComputationalComplexity:
         self._ignored_layers = []
         self._ignore_unknown_layers = True
         self._computational_complexity = {}
+
         net_precisions = set()
         for layer_provider in self._layer_providers:
             for i in range(layer_provider.get_outputs_number()):
@@ -33,16 +35,9 @@ class ModelComputationalComplexity:
             self._computational_complexity[layer_provider.name]['input_blob'] = input_blob
             self._computational_complexity[layer_provider.name]['output_blob'] = output_blob
 
-        self._executable_precisions = list(net_precisions.union(self._model_metadata.int8precisions))
+        self._executable_precisions = list(net_precisions.union(self._model_metadata.execution_precisions))
         self._params_const_layers = set()
 
-    @property
-    def _output_names(self) -> Tuple[str]:
-        return tuple(
-            layer_provider.name
-            for layer_provider in self._layer_providers
-            if isinstance(layer_provider, Result)
-        )
 
     @property
     def _input_names(self) -> Tuple[str]:
@@ -208,19 +203,20 @@ class ModelComputationalComplexity:
 
     def get_ops(self, layer_provider: LayerType) -> int:
         try:
-            total_flops = layer_provider.get_ops() * pow(10, -9)
+            total_ops = layer_provider.get_ops() * pow(10, -9)
         except NotImplementedError as error:
             self._computational_complexity[layer_provider.name]['g_iops'] = -1
             self._computational_complexity[layer_provider.name]['g_flops'] = -1
             raise error
         self._computational_complexity[layer_provider.name]['layer_params'] = get_layer_params(layer_provider)
+        execution_precision = self._model_metadata.get_execution_precisions(layer_provider.name)
         self._computational_complexity[layer_provider.name]['g_iops'] = (
-            total_flops if layer_provider.name in self._model_metadata.int8layers else 0
+            total_ops if PrecisionService.is_int(execution_precision) else 0
         )
         self._computational_complexity[layer_provider.name]['g_flops'] = (
-            0 if layer_provider.name in self._model_metadata.int8layers else total_flops
+            0 if PrecisionService.is_fp(execution_precision) else total_ops
         )
-        return total_flops
+        return total_ops
 
     def get_total_ops(self) -> tuple:
         uncounted_layers = set()
@@ -235,9 +231,12 @@ class ModelComputationalComplexity:
             except NotImplementedError:
                 uncounted_layers.add(layer_provider.type)
                 continue
-            if layer_provider.name in self._model_metadata.int8layers:
+            execution_precision = self._model_metadata.get_execution_precisions(layer_provider.name)
+
+            if PrecisionService.is_int(execution_precision):
                 total_iops += layer_flops
                 continue
+            print(layer_provider.name, layer_provider.type)
             total_flops += layer_flops
         if not self._ignore_unknown_layers and unknown_layers:
             print(f'Unknown types: {", ".join(unknown_layers)}')

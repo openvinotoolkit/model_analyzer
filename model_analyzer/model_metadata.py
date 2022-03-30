@@ -10,6 +10,7 @@ from openvino.runtime import ConstOutput, Node, Model, Layout
 
 from model_analyzer.layout_utils import parse_node_layout, is_image_info_layout
 from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
+from model_analyzer.precision_service import PrecisionService, Precision
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
 
@@ -23,7 +24,7 @@ class ModelMetaData:
         self._ops: List[Node] = self.model.get_ordered_ops()
 
         # Compile model to get execution graph if needed before Constant Folding (WA for PriorBox)
-        self.int8precisions, self.int8layers = self.get_exec_graph_int8layers()
+        self._precisions_distributions = self._get_ops_by_exec_precisions()
 
         OPENVINO_CORE_SERVICE.pass_constant_folding(self.model)
 
@@ -41,6 +42,16 @@ class ModelMetaData:
     @property
     def ops_types(self) -> Set[Node]:
         return {node.get_type_name() for node in self.ops}
+
+    @property
+    def execution_precisions(self) -> Tuple[Precision]:
+        return tuple(i.value for i in self._precisions_distributions.keys())
+
+    def get_execution_precisions(self, layer_name: str) -> Precision:
+        for precision, layer_names in self._precisions_distributions.items():
+            if layer_name in layer_names:
+                return precision
+        return Precision.unknown
 
     @property
     def _is_onnx(self) -> bool:
@@ -189,6 +200,35 @@ class ModelMetaData:
     @property
     def ops_ids(self) -> Dict[str, int]:
         return {op.friendly_name: i for i, op in enumerate(self.ops)}
+
+    def _get_ops_by_exec_precisions(self, device: str = 'CPU') -> Dict[Precision, List[str]]:
+        precisions = {}
+        precision_service = PrecisionService()
+
+        compiled_model = OPENVINO_CORE_SERVICE.compile_model(self.model, device)
+        runtime_model = compiled_model.get_runtime_model()
+
+        for execution_node in runtime_model.get_ordered_ops():
+            rt_info = execution_node.get_rt_info()
+
+            raw_runtime_precision = rt_info['runtimePrecision']
+            runtime_precision = precision_service.get_precision(raw_runtime_precision)
+
+            if runtime_precision not in precisions:
+                precisions[runtime_precision] = []
+
+            original_layers_names = rt_info['originalLayersNames']
+            if not original_layers_names:
+                continue
+            precisions[runtime_precision].extend(original_layers_names.split(','))
+
+        return precisions
+
+    def get_execution_precision_for_op(self, layer_name: str) -> Optional[str]:
+        for precision, layers in self._precisions_distributions.items():
+            if layer_name in layers:
+                return precision
+        return None
 
     def get_exec_graph_int8layers(self, device: str = 'CPU') -> Tuple[list, list]:
         int8layers = []

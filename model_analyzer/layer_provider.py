@@ -11,6 +11,7 @@ import numpy as np
 # pylint: disable=import-error
 from openvino.runtime import Node
 
+from model_analyzer.precision_service import PrecisionService
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
 
@@ -90,7 +91,8 @@ class LayerType(metaclass=MetaClass):
         return len(self.layer.outputs())
 
     def get_output_precision(self, index: int) -> int:
-        return self.layer.outputs()[index].get_element_type().get_type_name()
+        raw_precision = self.layer.outputs()[index].get_element_type().get_type_name()
+        return PrecisionService().get_precision(raw_precision).value
 
     def get_output_shape(self, index: int) -> list:
         output = self.layer.output(index)

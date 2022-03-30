@@ -7,14 +7,7 @@ from pathlib import Path
 from openvino.runtime import CompiledModel, Core, Model
 from openvino.runtime.passes import Manager
 
-
-class SingletonType(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(SingletonType, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+from model_analyzer.singleton_metaclass import SingletonType
 
 
 class OpenVINOCoreService(metaclass=SingletonType):
