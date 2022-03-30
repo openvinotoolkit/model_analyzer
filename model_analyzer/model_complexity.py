@@ -8,12 +8,11 @@ from typing import List, Tuple
 
 from model_analyzer.layer_provider import LayerTypesManager, LayerType, Constant, Result, Parameter
 from model_analyzer.model_metadata import ModelMetaData
-
-
-# pylint: disable=too-many-instance-attributes
+from model_analyzer.model_type_analyzer import ModelTypeGuesser
 from model_analyzer.value_converter import ValueConverter
 
 
+# pylint: disable=too-many-instance-attributes
 class ModelComputationalComplexity:
     def __init__(self, metadata: ModelMetaData):
         self._model_metadata = metadata
@@ -162,7 +161,7 @@ class ModelComputationalComplexity:
             if len(self._executable_precisions) == 1 else
             f'MIXED ({"-".join(sorted(self._executable_precisions))})'
         )
-        guessed_type = self._model_metadata.guess_topology_type()
+        guessed_type = ModelTypeGuesser.get_model_type(self._model_metadata)
         if guessed_type:
             guessed_type = guessed_type.value
         log.info('GFLOPs: %.4f', g_flops)
@@ -185,7 +184,7 @@ class ModelComputationalComplexity:
             info_writer.writerow(
                 ['LayerType', 'LayerName', 'GFLOPs', 'GIOPs', 'MParams', 'LayerParams', 'InputBlobs', 'OutputBlobs']
             )
-            layers_ids = self._model_metadata.get_layers_ids()
+            layers_ids = self._model_metadata.ops_ids
             try:
                 sorted_layers = sorted(self._computational_complexity.keys(), key=lambda x: layers_ids[x])
             except (KeyError, TypeError):

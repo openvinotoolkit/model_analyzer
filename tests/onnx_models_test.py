@@ -5,11 +5,14 @@ from pathlib import Path
 
 import pytest
 
+from tests.constants import CONFIGS_FOLDER
 from tests.utils import load_test_config
 
 from tests.generic_e2e_test_case import GenericE2ETestCase
 
-ARTIFACTS_DIR, DATA = load_test_config('onnx_models.json')
+
+config_path = CONFIGS_FOLDER / 'onnx_models.json'
+ARTIFACTS_DIR, DATA = load_test_config(config_path)
 
 
 class TestOnnxModelsCase(GenericE2ETestCase):

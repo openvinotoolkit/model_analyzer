@@ -1,21 +1,14 @@
 # Copyright (C) 2019-2022 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-import json
-import os
 import subprocess
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
-from tests.utils import load_test_config
+from utils import load_test_config
 
 CURRENT_SCRIPT_DIRECTORY = Path.cwd()
-openvino_dir = Path(os.environ['INTEL_OPENVINO_DIR'])
-
-model_downloader_script = (
-        openvino_dir / 'extras' / 'open_model_zoo' / 'tools' / 'model_tools' / 'downloader.py'
-)
 
 
 def parse_arguments():
@@ -35,14 +28,14 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def load_config(config_file_path: Path):
+def load_config(config_file_path: Path) -> dict:
     _, config = load_test_config(config_file_path)
     return config
 
 
 def download_model(model_name: str, output_path: Path):
     subprocess.run(
-        [sys.executable, model_downloader_script, '--name', model_name, '--output_dir', str(output_path), '--precision',
+        ['omz_downloader', '--name', model_name, '--output_dir', str(output_path), '--precision',
          'FP32'])
 
 
