@@ -3,9 +3,9 @@
 
 from pathlib import Path
 
-# pylint: disable=import-error
 from typing import Tuple
 
+# pylint: disable=import-error
 from openvino.runtime import CompiledModel, Core, Model
 
 
