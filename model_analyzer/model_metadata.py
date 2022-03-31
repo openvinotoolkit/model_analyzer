@@ -18,7 +18,7 @@ class ModelMetaData:
     """Retrieve IR metadata using heuristics."""
 
     def __init__(self, model_path: Path, weights_path: Path, device: str):
-        self.model: Model = OPENVINO_CORE_SERVICE.read_model(str(model_path), str(weights_path))
+        self._model: Model = OPENVINO_CORE_SERVICE.read_model(str(model_path), str(weights_path))
         self._device = device
 
         self._ops: List[Node] = self.model.get_ordered_ops()
@@ -191,7 +191,7 @@ class ModelMetaData:
     def ops_ids(self) -> Dict[str, int]:
         return {op.friendly_name: i for i, op in enumerate(self.ops)}
 
-    def get_exec_graph_int8layers(self, device: str = 'CPU') -> Tuple[list, list]:
+    def get_exec_graph_int8layers(self) -> Tuple[list, list]:
         int8layers = []
         int8precisions = set()
         # pylint: disable=too-many-nested-blocks
