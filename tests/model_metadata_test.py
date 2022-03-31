@@ -8,9 +8,12 @@ import pytest
 import os
 
 from model_analyzer.model_metadata import ModelMetaData
+from tests.constants import CONFIGS_FOLDER
 from tests.utils import load_test_config
 
-_, CONFIG_DATA = load_test_config('IRv10_models.json')
+config_path = CONFIGS_FOLDER / 'IRv10_models.json'
+
+_, CONFIG_DATA = load_test_config(config_path)
 
 
 def get_xml_and_bin_path(model_name: str) -> Tuple[Path, Path]:
@@ -45,7 +48,7 @@ def model_version_test_params(request) -> Tuple[str, int]:
 def test_get_ir_version(model_version_test_params: Tuple[str, int]):
     model, expected = model_version_test_params
     nmd = ModelMetaData(*get_xml_and_bin_path(model))
-    result = nmd.get_ir_version()
+    result = nmd.ir_version
     assert result == expected
 
 
@@ -101,8 +104,7 @@ def mo_parameters_test_params(request) -> Tuple[str, Dict[str, str]]:
 def test_get_mo_params(mo_parameters_test_params: Tuple[str, Dict[str, str]]):
     model_name, expected = mo_parameters_test_params
     mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = mmd.get_mo_params()
-    assert result == expected
+    assert mmd.mo_params == expected
 
 
 @pytest.fixture(params=[
@@ -116,7 +118,7 @@ def has_layer_type_test_params(request) -> Tuple[str, Tuple[str,...], bool]:
 def test_has_layer_type(has_layer_type_test_params: Tuple[str, Tuple[str,...], bool]):
     model_name, layer_types, expected = has_layer_type_test_params
     mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = mmd.has_layer_of_type(*layer_types)
+    result = mmd.has_op_of_type(*layer_types)
     assert result == expected
 
 
@@ -130,8 +132,7 @@ def num_classes_test_params(request) -> Tuple[str, int]:
 def test_get_num_classes(num_classes_test_params: Tuple[str, int]):
     model_name, expected = num_classes_test_params
     mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = mmd.get_num_classes()
-    assert result == expected
+    assert mmd.num_classes == expected
 
 
 @pytest.fixture(params=[
@@ -144,8 +145,7 @@ def background_class_test_params(request) -> Tuple[str, bool]:
 def test_has_background_class(background_class_test_params: Tuple[str, Optional[bool]]):
     model_name, expected = background_class_test_params
     mmd = ModelMetaData(*get_xml_and_bin_path(model_name))
-    result = mmd.has_background_class()
-    assert result == expected
+    assert mmd.has_background_class == expected
 
 
 @pytest.fixture(params=[

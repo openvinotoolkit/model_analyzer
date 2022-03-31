@@ -3,11 +3,15 @@
 
 import pytest
 
-from model_analyzer.model_metadata import ModelMetaData, ModelTypes
+from model_analyzer.model_metadata import ModelMetaData
+from model_analyzer.model_type_analyzer import ModelType, ModelTypeGuesser
+from tests.constants import CONFIGS_FOLDER
 from tests.generic_e2e_test_case import GenericE2ETestCase, MODEL_PATHS, MODEL_PATHS_TYPE
 from tests.utils import load_test_config
 
-ARTIFACTS_DIR, DATA = load_test_config('IRv10_models.json')
+config_path = CONFIGS_FOLDER / 'IRv10_models.json'
+
+ARTIFACTS_DIR, DATA = load_test_config(config_path)
 
 
 class TestCaseR1Models(GenericE2ETestCase):
@@ -35,9 +39,9 @@ class TestCaseR1Models(GenericE2ETestCase):
 
     def test_guess_topology_type(self, get_model_info_topology: MODEL_PATHS_TYPE):
         xml_path, bin_path, model_type = get_model_info_topology
-        if 'road-segmentation-adas-0001' in str(xml_path):
+        if 'road-segmentation-adas-0001' in str(xml_path) or 'face-reidentification-retail' not in str(xml_path):
             return 
-        cannot_recognize = ['face_recognition', 'object_attributes', 'optical_character_recognition',
+        cannot_recognize = ['object_attributes', 'optical_character_recognition',
                             'head_pose_estimation', 'human_pose_estimation', 'image_processing', 'feature_extraction',
                             'action_recognition', 'detection-']
 
@@ -46,16 +50,19 @@ class TestCaseR1Models(GenericE2ETestCase):
             bin_path = self.data_dir / bin_path
 
             if model_type == 'detection':
-                expected = ModelTypes.SSD
+                expected = ModelType.SSD
             elif model_type == 'instance_segmentation':
-                expected = ModelTypes.INSTANCE_SEGM
+                expected = ModelType.INSTANCE_SEGMENTATION
             elif model_type == 'semantic_segmentation':
-                expected = ModelTypes.SEMANTIC_SEGM
+                expected = ModelType.SEMANTIC_SEGMENTATION
             elif model_type == 'yolo':
-                expected = ModelTypes.YOLO
+                expected = ModelType.YOLO
+            elif model_type == 'face_recognition':
+                expected = ModelType.FACE_RECOGNITION
             else:
                 expected = model_type
 
-            result = ModelMetaData(xml_path, bin_path).guess_topology_type()
+            model_metadata = ModelMetaData(xml_path, bin_path)
+            result = ModelTypeGuesser.get_model_type(model_metadata)
 
             assert expected == result
