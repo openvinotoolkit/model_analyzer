@@ -17,7 +17,7 @@ from model_analyzer.shape_utils import get_shape_for_node_safely
 class ModelMetaData:
     """Retrieve IR metadata using heuristics."""
 
-    def __init__(self, model_path: Path, weights_path: Path, device: str):
+    def __init__(self, model_path: Path, weights_path: Path, device: str = 'CPU'):
         self._model: Model = OPENVINO_CORE_SERVICE.read_model(str(model_path), str(weights_path))
         self._device = device
 
