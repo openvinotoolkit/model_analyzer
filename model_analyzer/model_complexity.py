@@ -38,7 +38,6 @@ class ModelComputationalComplexity:
         self._executable_precisions = list(net_precisions.union(self._model_metadata.execution_precisions))
         self._params_const_layers = set()
 
-
     @property
     def _input_names(self) -> Tuple[str]:
         return tuple(
@@ -81,7 +80,6 @@ class ModelComputationalComplexity:
                 parameters['zero_params'] += zeros
             self._computational_complexity[layer_provider.name]['m_params'] = ValueConverter.to_giga(params)
         return parameters
-
 
     @staticmethod
     def get_blob_sizes_and_precisions(layer_provider) -> tuple:
@@ -177,7 +175,7 @@ class ModelComputationalComplexity:
         with open(file_name, mode='w') as info_file:
             info_writer = csv.writer(info_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             info_writer.writerow(
-                ['LayerType', 'LayerName', 'GFLOPs', 'GIOPs', 'MParams', 'LayerParams', 'InputBlobs', 'OutputBlobs']
+                ['LayerType', 'LayerName', 'GFLOPs', 'GIOPs', 'Precision']
             )
             layers_ids = self._model_metadata.ops_ids
             try:
@@ -194,27 +192,30 @@ class ModelComputationalComplexity:
                     cur_layer['layer_name'],
                     '{:.4f}'.format(float(cur_layer['g_flops'])),
                     '{:.4f}'.format(float(cur_layer['g_iops'])),
-                    '{:.4f}'.format(float(cur_layer['m_params'])),
-                    cur_layer.get('layer_params'),
-                    cur_layer['input_blob'],
-                    cur_layer['output_blob'],
+                    cur_layer['precision'],
+                    # cur_layer.get('layer_params'),
+                    # cur_layer['input_blob'],
+                    # cur_layer['output_blob'],
                 ])
         log.info('Complexity file name: %s', file_name)
 
     def get_ops(self, layer_provider: LayerType) -> int:
+        execution_precision = self._model_metadata.get_execution_precisions(layer_provider.name)
+        self._computational_complexity[layer_provider.name]['precision'] = execution_precision
         try:
             total_ops = layer_provider.get_ops() * pow(10, -9)
         except NotImplementedError as error:
             self._computational_complexity[layer_provider.name]['g_iops'] = -1
             self._computational_complexity[layer_provider.name]['g_flops'] = -1
+
             raise error
         self._computational_complexity[layer_provider.name]['layer_params'] = get_layer_params(layer_provider)
-        execution_precision = self._model_metadata.get_execution_precisions(layer_provider.name)
+
         self._computational_complexity[layer_provider.name]['g_iops'] = (
             total_ops if PrecisionService.is_int(execution_precision) else 0
         )
         self._computational_complexity[layer_provider.name]['g_flops'] = (
-            0 if PrecisionService.is_fp(execution_precision) else total_ops
+            total_ops if PrecisionService.is_fp(execution_precision) else 0
         )
         return total_ops
 
@@ -227,16 +228,16 @@ class ModelComputationalComplexity:
             if layer_provider.__class__ == LayerType:
                 unknown_layers.add(layer_provider.type)
             try:
-                layer_flops = self.get_ops(layer_provider)
+                layer_ops = self.get_ops(layer_provider)
             except NotImplementedError:
                 uncounted_layers.add(layer_provider.type)
                 continue
             execution_precision = self._model_metadata.get_execution_precisions(layer_provider.name)
 
             if PrecisionService.is_int(execution_precision):
-                total_iops += layer_flops
+                total_iops += layer_ops
             elif PrecisionService.is_fp(execution_precision):
-                total_flops += layer_flops
+                total_flops += layer_ops
 
         if not self._ignore_unknown_layers and unknown_layers:
             print(f'Unknown types: {", ".join(unknown_layers)}')
