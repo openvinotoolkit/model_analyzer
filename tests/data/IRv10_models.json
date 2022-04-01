@@ -57,7 +57,7 @@
     "xml_path": "intel/driver-action-recognition-adas-0002/driver-action-recognition-adas-0002-encoder/FP32/driver-action-recognition-adas-0002-encoder.xml",
     "bin_path": "intel/driver-action-recognition-adas-0002/driver-action-recognition-adas-0002-encoder/FP32/driver-action-recognition-adas-0002-encoder.bin",
     "analysis_report": {
-      "GFLOPs": 0.6669,
+      "GFLOPs": 0.6827,
       "GIOPs": 0.0,
       "MParams": 2.8627,
       "MinMem": 2.4084,
@@ -108,7 +108,7 @@
     "xml_path": "intel/face-detection-retail-0005/FP32/face-detection-retail-0005.xml",
     "bin_path": "intel/face-detection-retail-0005/FP32/face-detection-retail-0005.bin",
     "analysis_report": {
-      "GFLOPs": 0.9697,
+      "GFLOPs": 0.9825,
       "GIOPs": 0.0,
       "MParams": 1.0468,
       "MinMem": 3.51,
@@ -199,7 +199,7 @@
     "xml_path": "intel/image-retrieval-0001/FP32/image-retrieval-0001.xml",
     "bin_path": "intel/image-retrieval-0001/FP32/image-retrieval-0001.bin",
     "analysis_report": {
-      "GFLOPs": 0.6096,
+      "GFLOPs": 0.6191,
       "GIOPs": 0.0,
       "MParams": 2.5348,
       "MinMem": 2.4084,
@@ -355,7 +355,7 @@
     "xml_path": "intel/person-vehicle-bike-detection-crossroad-0078/FP32/person-vehicle-bike-detection-crossroad-0078.xml",
     "bin_path": "intel/person-vehicle-bike-detection-crossroad-0078/FP32/person-vehicle-bike-detection-crossroad-0078.bin",
     "analysis_report": {
-      "GFLOPs": 3.8976,
+      "GFLOPs": 3.9495,
       "GIOPs": 0.0,
       "MParams": 1.9526,
       "MinMem": 9.4372,
@@ -368,7 +368,7 @@
     "xml_path": "intel/person-vehicle-bike-detection-crossroad-1016/FP32/person-vehicle-bike-detection-crossroad-1016.xml",
     "bin_path": "intel/person-vehicle-bike-detection-crossroad-1016/FP32/person-vehicle-bike-detection-crossroad-1016.bin",
     "analysis_report": {
-      "GFLOPs": 3.4362,
+      "GFLOPs": 3.4981,
       "GIOPs": 0.0,
       "MParams": 3.0805,
       "MinMem": 13.3693,
@@ -381,7 +381,7 @@
     "xml_path": "intel/product-detection-0001/FP32/product-detection-0001.xml",
     "bin_path": "intel/product-detection-0001/FP32/product-detection-0001.bin",
     "analysis_report": {
-      "GFLOPs": 3.4746,
+      "GFLOPs": 3.5365,
       "GIOPs": 0.0,
       "MParams": 3.3107,
       "MinMem": 13.3693,
@@ -524,7 +524,7 @@
     "xml_path": "intel/vehicle-license-plate-detection-barrier-0106/FP32/vehicle-license-plate-detection-barrier-0106.xml",
     "bin_path": "intel/vehicle-license-plate-detection-barrier-0106/FP32/vehicle-license-plate-detection-barrier-0106.bin",
     "analysis_report": {
-      "GFLOPs": 0.344,
+      "GFLOPs": 0.3553,
       "GIOPs": 0.0,
       "MParams": 0.6343,
       "MinMem": 4.32,
