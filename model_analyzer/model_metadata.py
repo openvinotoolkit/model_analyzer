@@ -10,7 +10,7 @@ from openvino.runtime import ConstOutput, Node, Model, Layout
 
 from model_analyzer.layout_utils import parse_node_layout, is_image_info_layout
 from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
-from model_analyzer.precision_service import PrecisionService, Precision
+from model_analyzer.precision_service import Precision, PRECISION_SERVICE
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
 
@@ -203,7 +203,6 @@ class ModelMetaData:
 
     def _get_ops_by_exec_precisions(self, device: str = 'CPU') -> Dict[Precision, List[str]]:
         precisions = {}
-        precision_service = PrecisionService()
 
         compiled_model = OPENVINO_CORE_SERVICE.compile_model(self.model, device)
         runtime_model = compiled_model.get_runtime_model()
@@ -211,7 +210,7 @@ class ModelMetaData:
             rt_info = execution_node.get_rt_info()
 
             raw_runtime_precision = rt_info['runtimePrecision']
-            runtime_precision = precision_service.get_precision(raw_runtime_precision)
+            runtime_precision = PRECISION_SERVICE.get_precision(raw_runtime_precision)
 
             if runtime_precision not in precisions:
                 precisions[runtime_precision] = []
