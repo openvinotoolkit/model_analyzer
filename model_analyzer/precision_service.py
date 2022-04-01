@@ -39,12 +39,9 @@ class PrecisionService(metaclass=SingletonType):
 
     @staticmethod
     def is_int(precision: Precision) -> bool:
-        return precision == Precision.int8
+        return precision in (Precision.int8, Precision.bool)
 
     @staticmethod
     def is_fp(precision: Precision) -> bool:
         return precision in (Precision.fp32, Precision.fp16)
 
-    @staticmethod
-    def is_bool(precision: Precision) -> bool:
-        return precision == Precision.bool

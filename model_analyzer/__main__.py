@@ -88,13 +88,13 @@ def main(cli_args):
 
     sparsity_ignored_layers = cli_args.sparsity_ignored_layers.split(',')
     model_computational_complexity.set_ignored_layers(sparsity_ignored_layers,
-                                                        cli_args.sparsity_ignore_first_conv,
-                                                        cli_args.sparsity_ignore_fc)
+                                                      cli_args.sparsity_ignore_first_conv,
+                                                      cli_args.sparsity_ignore_fc)
 
     model_computational_complexity.print_network_info(cli_args.report_dir,
-                                                        cli_args.model_report,
-                                                        cli_args.per_layer_mode,
-                                                        cli_args.per_layer_report)
+                                                      cli_args.model_report,
+                                                      cli_args.per_layer_mode,
+                                                      cli_args.per_layer_report)
 
 
 if __name__ == '__main__':

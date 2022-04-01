@@ -35,5 +35,11 @@ class OpenVINOCoreService(metaclass=SingletonType):
         except Exception as exception:
             logging.error(exception, exc_info=True)
 
+    @staticmethod
+    def serialize_model(model: Model, xml_path: Path, bin_path: Path):
+        pass_manager = Manager()
+        pass_manager.register_pass('Serialize', str(xml_path), str(bin_path))
+        pass_manager.run_passes(model)
+
 
 OPENVINO_CORE_SERVICE = OpenVINOCoreService()

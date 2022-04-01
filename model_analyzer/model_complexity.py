@@ -6,7 +6,7 @@ import logging as log
 import os
 from typing import List, Tuple
 
-from model_analyzer.layer_provider import LayerTypesManager, LayerType, Constant, Result, Parameter
+from model_analyzer.layer_provider import LayerTypesManager, LayerType, Constant, Parameter
 from model_analyzer.model_metadata import ModelMetaData
 from model_analyzer.model_type_analyzer import ModelTypeGuesser
 from model_analyzer.precision_service import PrecisionService
@@ -236,7 +236,7 @@ class ModelComputationalComplexity:
             if PrecisionService.is_int(execution_precision):
                 total_iops += layer_flops
                 continue
-            print(layer_provider.name, layer_provider.type)
+            # print(layer_provider.name, layer_provider.type)
             total_flops += layer_flops
         if not self._ignore_unknown_layers and unknown_layers:
             print(f'Unknown types: {", ".join(unknown_layers)}')
