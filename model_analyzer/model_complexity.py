@@ -235,9 +235,9 @@ class ModelComputationalComplexity:
 
             if PrecisionService.is_int(execution_precision):
                 total_iops += layer_flops
-                continue
-            # print(layer_provider.name, layer_provider.type)
-            total_flops += layer_flops
+            elif PrecisionService.is_fp(execution_precision):
+                total_flops += layer_flops
+
         if not self._ignore_unknown_layers and unknown_layers:
             print(f'Unknown types: {", ".join(unknown_layers)}')
             raise Exception('Model contains unknown layers!')
