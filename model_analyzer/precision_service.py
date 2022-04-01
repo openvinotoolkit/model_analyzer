@@ -44,4 +44,3 @@ class PrecisionService(metaclass=SingletonType):
     @staticmethod
     def is_fp(precision: Precision) -> bool:
         return precision in (Precision.fp32, Precision.fp16)
-

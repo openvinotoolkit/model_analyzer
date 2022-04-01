@@ -45,7 +45,7 @@ class ModelMetaData:
 
     @property
     def execution_precisions(self) -> Tuple[Precision]:
-        return tuple(i.value for i in self._precisions_distributions.keys())
+        return tuple(i.value for i in self._precisions_distributions)
 
     def get_execution_precisions(self, layer_name: str) -> Precision:
         for precision, layer_names in self._precisions_distributions.items():
