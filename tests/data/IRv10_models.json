@@ -108,7 +108,7 @@
     "xml_path": "intel/face-detection-retail-0005/FP32/face-detection-retail-0005.xml",
     "bin_path": "intel/face-detection-retail-0005/FP32/face-detection-retail-0005.bin",
     "analysis_report": {
-      "GFLOPs": 0.9697,
+      "GFLOPs": 0.9825,
       "GIOPs": 0.0,
       "MParams": 1.0468,
       "MinMem": 3.51,
