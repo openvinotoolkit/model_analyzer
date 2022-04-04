@@ -368,7 +368,7 @@
     "xml_path": "intel/person-vehicle-bike-detection-crossroad-1016/FP32/person-vehicle-bike-detection-crossroad-1016.xml",
     "bin_path": "intel/person-vehicle-bike-detection-crossroad-1016/FP32/person-vehicle-bike-detection-crossroad-1016.bin",
     "analysis_report": {
-      "GFLOPs": 3.4403,
+      "GFLOPs": 3.4981,
       "GIOPs": 0.0,
       "MParams": 3.0805,
       "MinMem": 13.3693,
