@@ -22,7 +22,7 @@ class ModelMetaData:
     """Retrieve IR metadata using heuristics."""
 
     def __init__(self, model_path: Path, weights_path: Path):
-        self._model_path = model_path
+        self._model_path = model_path.name
         self._model: Model = OPENVINO_CORE_SERVICE.read_model(str(model_path), str(weights_path))
 
         self._ops: List[Node] = self.model.get_ordered_ops()
@@ -210,7 +210,7 @@ class ModelMetaData:
 
         compiled_model = OPENVINO_CORE_SERVICE.compile_model(self.model, device)
         runtime_model = compiled_model.get_runtime_model()
-        path = MODELS_PATH / f'{self.model.friendly_name}'
+        path = MODELS_PATH / f'{self._model_path}'
         OPENVINO_CORE_SERVICE.serialize_model(runtime_model, f'{path}.xml', f'{path}.bin')
         for execution_node in runtime_model.get_ordered_ops():
             rt_info = execution_node.get_rt_info()
