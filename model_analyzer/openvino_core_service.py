@@ -7,14 +7,7 @@ from pathlib import Path
 from openvino.runtime import CompiledModel, Core, Model
 from openvino.runtime.passes import Manager
 
-
-class SingletonType(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(SingletonType, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+from model_analyzer.singleton_metaclass import SingletonType
 
 
 class OpenVINOCoreService(metaclass=SingletonType):
@@ -41,6 +34,12 @@ class OpenVINOCoreService(metaclass=SingletonType):
         # pylint: disable=broad-except
         except Exception as exception:
             logging.error(exception, exc_info=True)
+
+    @staticmethod
+    def serialize_model(model: Model, xml_path: Path, bin_path: Path):
+        pass_manager = Manager()
+        pass_manager.register_pass('Serialize', str(xml_path), str(bin_path))
+        pass_manager.run_passes(model)
 
 
 OPENVINO_CORE_SERVICE = OpenVINOCoreService()
