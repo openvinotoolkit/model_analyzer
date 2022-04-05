@@ -35,6 +35,7 @@ Argument | Explanation |Example
 `-h`, `--help`|Displays help message.|`N/A`|
 `-m`, `--model`|Path to an .xml file of the Intermediate Representation (IR) model. Or path to .onnx or .prototxt file of ONNX model.|`./public/model/FP16/model.xml`|
 `-w`, `--weights`|Path to the .bin file of the Intermediate Representation (IR) model. If not specified, the weights file name is expected to be the same as the .xml file passed with `--model` option.|`./public/model/FP16/model.bin`|
+`-d`, `--device`|Target device. If not specified, the `CPU` will be used.|`CPU`|
 `--ignore-unknown-layers` | Ignores unknown types of layers when counting GFLOPs.|`N/A`|
 `-o`, `--report-dir`|Output directory.|`/Home/user/Public/report`|
 `--model-report`|Name for the file where theoretical analysis results are stored.|`model_report.csv`|

@@ -9,6 +9,7 @@ from typing import Tuple
 
 from model_analyzer.model_complexity import ModelComputationalComplexity
 from model_analyzer.model_metadata import ModelMetaData
+from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
 
 
 def parse_arguments():
@@ -26,6 +27,14 @@ def parse_arguments():
                              'the weights file name expected to be the same as the .xml file passed'
                              'with --model option',
                         type=Path)
+
+    parser.add_argument('-d', '--device',
+                        help='Specify a target device. '
+                             f'he list of available devices: {OPENVINO_CORE_SERVICE.available_devices}. '
+                             'Default value is CPU.',
+                        type=str,
+                        default='CPU',
+                        choices=OPENVINO_CORE_SERVICE.available_devices)
 
     parser.add_argument('-o', '--report_dir', '--report-dir',
                         help='Output directory',
@@ -81,7 +90,7 @@ def process_model_files(cli_args) -> Tuple[Path, Path]:
 def main(cli_args):
     log.info('Loading network files:\n\t%s\n\t%s', cli_args.model, cli_args.weights)
 
-    model_metadata = ModelMetaData(cli_args.model, cli_args.weights)
+    model_metadata = ModelMetaData(cli_args.model, cli_args.weights, cli_args.device)
 
     model_computational_complexity = ModelComputationalComplexity(model_metadata)
     model_computational_complexity.set_ignore_unknown_layers(cli_args.ignore_unknown_layers)

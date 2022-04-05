@@ -32,6 +32,7 @@ class GenericE2ETestCase:
         report_path = os.path.join(self.artifacts_dir, report_name)
         namespace = TestNamespace(model=xml_path,
                                   weights=bin_path,
+                                  device='CPU',
                                   report_dir=self.artifacts_dir,
                                   per_layer_mode=False,
                                   per_layer_report=None,
