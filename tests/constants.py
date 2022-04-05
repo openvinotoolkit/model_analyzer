@@ -4,5 +4,5 @@
 import os
 from pathlib import Path
 
-MODELS_PATH = Path(os.environ['MODELS_PATH']) / 'v11'
+MODELS_PATH = Path(os.environ['MODELS_PATH'])
 CONFIGS_FOLDER = Path(__file__).parent.resolve() / 'data'
