@@ -8,7 +8,7 @@ import pytest
 import os
 
 from model_analyzer.model_metadata import ModelMetaData
-from tests.constants import CONFIGS_FOLDER
+from tests.constants import CONFIGS_FOLDER, MODELS_PATH
 from tests.utils import load_test_config
 
 config_path = CONFIGS_FOLDER / 'IRv10_models.json'
@@ -17,10 +17,9 @@ _, CONFIG_DATA = load_test_config(config_path)
 
 
 def get_xml_and_bin_path(model_name: str) -> Tuple[Path, Path]:
-    model_dir = Path(os.environ['MODELS_PATH'])
     model_data = next(filter(lambda model_info: model_info['name'] == model_name, CONFIG_DATA))
-    model_xml_path = model_dir / model_data['xml_path']
-    model_bin_path = model_dir / model_data['bin_path']
+    model_xml_path = MODELS_PATH / model_data['xml_path']
+    model_bin_path = MODELS_PATH / model_data['bin_path']
     return model_xml_path, model_bin_path
 
 
