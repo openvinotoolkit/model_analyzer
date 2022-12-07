@@ -41,4 +41,4 @@ def parse_node_layout(node: Node) -> List[str]:
         return get_fully_undefined_node_layout(node)
 
     clear_layout = layout_match.group('layout')
-    return [dim for dim in clear_layout.split(',')]
+    return list(clear_layout.split(','))

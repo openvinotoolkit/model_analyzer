@@ -23,7 +23,7 @@ def get_shape_for_node_safely(node: Input) -> List[int]:
         )
 
         return get_shape_safely(partial_shape)
-    return [s for s in partial_shape.to_shape()]
+    return list(partial_shape.to_shape())
 
 
 def get_shape_safely(partial_shape: PartialShape) -> List[int]:
