@@ -1,5 +1,5 @@
 pylint==2.9.0
-astroid==2.0.4
+astroid==2.6.6
 test-generator==0.1.2
 numpy==1.22.0
 pylint-quotes==0.2.1
