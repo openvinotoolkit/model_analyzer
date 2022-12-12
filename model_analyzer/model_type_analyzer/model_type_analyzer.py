@@ -158,7 +158,7 @@ class YoloV2TypeAnalyzer(GenericYoloTypeAnalyzer):
     def is_like(cls, model_metadata: ModelMetaData) -> bool:
         return (
                 cls._has_region_yolo_node(model_metadata) and
-                cls._get_anchors(model_metadata) == YoloAnchors.yolo_v2
+                cls._get_anchors(model_metadata) == YoloAnchors.YOLO_V2
         )
 
 
@@ -168,7 +168,7 @@ class TinyYoloV2TypeAnalyzer(YoloV2TypeAnalyzer):
     @classmethod
     def is_like(cls, model_metadata: ModelMetaData) -> bool:
         if cls._has_region_yolo_node(model_metadata):
-            return cls._get_anchors(model_metadata) == YoloAnchors.tiny_yolo_v2.value
+            return cls._get_anchors(model_metadata) == YoloAnchors.TINY_YOLO_V2.value
         return cls._is_yolo_like(model_metadata, output_count=1)
 
 
@@ -179,7 +179,7 @@ class YoloV3TypeAnalyzer(GenericYoloTypeAnalyzer):
     def is_like(cls, model_metadata: ModelMetaData) -> bool:
         return (
                 cls._has_region_yolo_node(model_metadata) and
-                cls._get_anchors(model_metadata) == YoloAnchors.yolo_v3.value
+                cls._get_anchors(model_metadata) == YoloAnchors.YOLO_V3.value
         )
 
     @property
@@ -204,7 +204,7 @@ class TinyYoloV3V4TypeAnalyzer(YoloV3TypeAnalyzer):
     @classmethod
     def is_like(cls, model_metadata: ModelMetaData) -> bool:
         if cls._has_region_yolo_node(model_metadata):
-            return cls._get_anchors(model_metadata) == YoloAnchors.tiny_yolo_v3_v4.value
+            return cls._get_anchors(model_metadata) == YoloAnchors.TINY_YOLO_V3_V4.value
 
         return cls._is_yolo_like(model_metadata, output_count=2)
 
