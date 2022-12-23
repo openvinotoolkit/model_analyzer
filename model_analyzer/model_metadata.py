@@ -112,8 +112,8 @@ class ModelMetaData:
     def mo_params(self) -> Optional[Dict[str, str]]:
         """Return Model Optimizer CLI parameters from IR metadata, `None` if the node is absent."""
 
-        mo_cli_params_node = self.xml.find('./meta_data/cli_parameters')
-        mo_version_node = self.xml.find('./meta_data/MO_version')
+        mo_cli_params_node = self.xml.find('./rt_info/conversion_parameters')
+        mo_version_node = self.xml.find('./rt_info/MO_version')
         mo_cli_params = {}
         if mo_cli_params_node is not None:
             mo_cli_params = {n.tag: n.attrib['value'] for n in mo_cli_params_node if n.tag != 'unset'}
