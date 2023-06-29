@@ -5,6 +5,7 @@ from pathlib import Path
 
 # pylint: disable=import-error
 from openvino.runtime import CompiledModel, Core, Model
+from openvino.runtime.passes import ConstantFolding
 from openvino.runtime.passes import Manager
 
 
@@ -35,7 +36,7 @@ class OpenVINOCoreService(metaclass=SingletonType):
     def pass_constant_folding(model: Model):
         try:
             pass_manager = Manager()
-            pass_manager.register_pass('ConstantFolding')
+            pass_manager.register_pass(ConstantFolding())
             pass_manager.set_per_pass_validation(False)
             pass_manager.run_passes(model)
         # pylint: disable=broad-except
