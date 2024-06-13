@@ -2,16 +2,17 @@ name: "Check Pull Request Name"
 
 on: [pull_request, push]
 
-jobs:
+permissions:
+  contents: read
 
+jobs:
   pr-name-check:
     name: Check Pull Request Name
     runs-on: ubuntu-20.04
     if: github.event_name == 'pull_request'
-
     steps:
       - name: Compare PR Name to the Template
-        uses: actions/github-script@v5
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             const prNameRegExp = /^(?:\[\d+\]\s?)+\w+.*/;
