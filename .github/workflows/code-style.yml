@@ -1,4 +1,5 @@
 name: Code Style
+
 on:
   push:
     branches:
@@ -7,15 +8,17 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   pylint-code-check:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version: [ 3.8 ]
-
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Install dependencies
         run: |
           sudo apt install python3-setuptools
