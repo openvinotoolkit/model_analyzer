@@ -43,7 +43,7 @@ Argument | Explanation |Example
 `--sparsity-ignored-layers`| Specifies ignored layers names separated by comma.|`Constant, Elu, Split`|
 `--sparsity-ignore-first-conv` | Ignores first Convolution layer for sparsity computation.|`N/A`|
 `--sparsity-ignore-fc`|  Ignores FullyConnected layers for sparsity computation.|`N/A`|
-
+:)
 Model Analyzer supports counting GFLOPs and GIOPs for the following layers:
 
 <details>
