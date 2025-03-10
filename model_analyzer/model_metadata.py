@@ -206,7 +206,7 @@ class ModelMetaData:
                 else len(execution_node.inputs())
             )
             input_precisions = [
-                execution_node.input(i).get_source_output().node.get_rt_info()['outputPrecisions'].lower()
+                str(execution_node.input(i).get_source_output().node.get_rt_info()['outputPrecisions']).lower()
                 for i in range(inputs_number)]
             search_precisions = ['i8', 'u8']
             for precision in search_precisions:
