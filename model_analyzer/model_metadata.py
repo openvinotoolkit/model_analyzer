@@ -200,13 +200,13 @@ class ModelMetaData:
         runtime_model = compiled_model.get_runtime_model()
         for execution_node in runtime_model.get_ordered_ops():
             rt_info = execution_node.get_rt_info()
-            layer_type = rt_info['layerType']
+            layer_type = str(rt_info['layerType'])
             inputs_number = (
                 1 if layer_type.lower() in {'convolution', 'deconvolution', 'fullyconnected', 'gemm', 'pooling'}
                 else len(execution_node.inputs())
             )
             input_precisions = [
-                execution_node.input(i).get_source_output().node.get_rt_info()['outputPrecisions'].lower()
+                str(execution_node.input(i).get_source_output().node.get_rt_info()['outputPrecisions']).lower()
                 for i in range(inputs_number)]
             search_precisions = ['i8', 'u8']
             for precision in search_precisions:
