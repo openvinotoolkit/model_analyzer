@@ -202,7 +202,7 @@ class ModelMetaData:
             rt_info = execution_node.get_rt_info()
             layer_type = str(rt_info['layerType'])
             inputs_number = (
-                1 if layer_type.lower() in {'convolution', 'deconvolution', 'fullyconnected', 'gemm', 'pooling'}
+                1 if str(layer_type).lower() in {'convolution', 'deconvolution', 'fullyconnected', 'gemm', 'pooling'}
                 else len(execution_node.inputs())
             )
             input_precisions = [
