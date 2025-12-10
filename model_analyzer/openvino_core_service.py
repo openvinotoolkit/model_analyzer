@@ -4,9 +4,9 @@ import logging
 from pathlib import Path
 
 # pylint: disable=import-error
-from openvino.runtime import CompiledModel, Core, Model
-from openvino.runtime.passes import ConstantFolding
-from openvino.runtime.passes import Manager
+from openvino import CompiledModel, Core, Model
+from openvino.passes import ConstantFolding
+from openvino.passes import Manager
 
 
 class SingletonType(type):

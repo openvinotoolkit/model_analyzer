@@ -5,7 +5,7 @@ import logging
 from typing import List
 
 # pylint: disable=import-error
-from openvino.runtime import Input, PartialShape
+from openvino import Input, PartialShape
 
 
 def get_shape_for_node_safely(node: Input) -> List[int]:

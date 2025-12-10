@@ -9,7 +9,7 @@ from typing import List, Type, Tuple, Dict, Iterable
 import numpy as np
 
 # pylint: disable=import-error
-from openvino.runtime import Node
+from openvino import Node
 
 from model_analyzer.shape_utils import get_shape_for_node_safely
 
