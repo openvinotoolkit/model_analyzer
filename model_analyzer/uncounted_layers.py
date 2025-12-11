@@ -7,7 +7,7 @@ from typing import Tuple, Dict
 
 import numpy as np
 # pylint: disable=no-name-in-module,import-error
-from openvino.runtime import Node
+from openvino import Node
 
 from model_analyzer.layer_provider import LayerTypesManager, LayerType
 

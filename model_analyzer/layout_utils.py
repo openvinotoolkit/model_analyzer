@@ -5,7 +5,7 @@ import re
 from typing import List
 
 # pylint: disable=import-error
-from openvino.runtime import Node, Layout
+from openvino import Node, Layout
 
 from model_analyzer.constants import LayoutTypes
 

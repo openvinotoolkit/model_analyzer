@@ -6,7 +6,7 @@ from typing import Dict, Optional, Tuple, List, Set
 from xml.etree import ElementTree
 
 # pylint: disable=import-error
-from openvino.runtime import ConstOutput, Node, Model, Layout
+from openvino import ConstOutput, Node, Model, Layout
 
 from model_analyzer.layout_utils import parse_node_layout, is_image_info_layout
 from model_analyzer.openvino_core_service import OPENVINO_CORE_SERVICE
